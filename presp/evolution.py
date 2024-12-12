@@ -11,6 +11,7 @@ from presp.evaluator import Evaluator
 from presp import nsga2_utils
 from presp.prescriptor import Prescriptor, PrescriptorFactory
 
+
 class Evolution:
     """
     Handles the ESP evolutionary process in run_evolution.
@@ -29,7 +30,7 @@ class Evolution:
                  prescriptor_factory: PrescriptorFactory,
                  evaluator: Evaluator,
                  validator: Evaluator):
-        
+
         self.n_generations = n_generations
         self.population_size = population_size
         self.remove_population_pct = remove_population_pct
