@@ -1,3 +1,6 @@
+"""
+Class responsible for running the overall evolutionary process.
+"""
 from pathlib import Path
 import random
 
@@ -8,9 +11,11 @@ from presp.evaluator import Evaluator
 from presp import nsga2_utils
 from presp.prescriptor import Prescriptor, PrescriptorFactory
 
-
 class Evolution:
-
+    """
+    Handles the ESP evolutionary process in run_evolution.
+    Creates an initial population, then for each time .step() is called, runs a single generation of evolution.
+    """
     def __init__(self,
                  n_generations: int,
                  population_size: int,
@@ -71,7 +76,9 @@ class Evolution:
     def selection(self, sorted_population: list[Prescriptor]) -> list[Prescriptor]:
         """
         Takes two random parents and compares their indices since this is a measure of their performance.
-        Note: It is possible for this function to select the same parent twice.
+        NOTE: It is possible for this function to select the same parent twice.
+        :param sorted_population: The population of prescriptors sorted by rank and distance.
+        :return: A tuple of two parents to be used for crossover.
         """
         idx1 = min(random.choices(range(len(sorted_population)), k=2))
         idx2 = min(random.choices(range(len(sorted_population)), k=2))
@@ -80,6 +87,8 @@ class Evolution:
     def create_pop(self, population: list[Prescriptor]) -> list[Prescriptor]:
         """
         Creates a population by selecting parents, crossing them over, then mutating the children.
+        :param population: The filtered population to select parents from.
+        :return: The new population
         """
         next_pop = []
         n_children = self.population_size - self.n_elites
@@ -92,6 +101,8 @@ class Evolution:
     def sort_pop(self, population: list[Prescriptor]) -> list[Prescriptor]:
         """
         Sorts the population by rank and distance according to NSGA-II.
+        :param population: The population to sort.
+        :return: The sorted population.
         """
         fronts, ranks = nsga2_utils.fast_non_dominated_sort(population)
         for candidate, rank in zip(population, ranks):
@@ -123,12 +134,15 @@ class Evolution:
         df.to_csv(self.save_path / f"{self.generation}.csv", index=False)
 
     def validate(self):
+        """
+        Validates the current population with a validator evaluator.
+        """
         rows = []
         (self.save_path / "validation").mkdir(parents=True, exist_ok=True)
         for candidate in self.population:
             val_metrics = self.validator.evaluate_candidate(candidate)
             row = {"cand_id": candidate.cand_id}
-            for outcome, metric in zip(candidate.outcomes, val_metrics):
+            for outcome, metric in zip(self.validator.outcomes, val_metrics):
                 row[outcome] = metric
             rows.append(row)
         df = pd.DataFrame(rows)

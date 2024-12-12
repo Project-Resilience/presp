@@ -1,7 +1,6 @@
 """
 Utilities for NSGA-II implementation.
 """
-
 from presp.prescriptor import Prescriptor
 
 
@@ -9,6 +8,8 @@ from presp.prescriptor import Prescriptor
 def fast_non_dominated_sort(population: list[Prescriptor]) -> tuple[list[list[Prescriptor]], list[int]]:
     """
     Fast non-dominated sort algorithm from ChatGPT
+    :param population: The population to sort.
+    :return: A tuple containing a list of fronts and a list of ranks for each candidate.
     """
     population_size = len(population)
     S = [[] for _ in range(population_size)]
@@ -63,6 +64,7 @@ def fast_non_dominated_sort(population: list[Prescriptor]) -> tuple[list[list[Pr
 def calculate_crowding_distance(front: list[Prescriptor]):
     """
     Set crowding distance of each candidate in front in-place.
+    :param front: The list of prescriptors to calculate crowding distance for.
     """
     n_objectives = len(front[0].metrics)
     for candidate in front:
@@ -85,6 +87,9 @@ def dominates(candidate1: Prescriptor, candidate2: Prescriptor) -> bool:
     One individual dominates another if it's doing better in at least one objective
     and better than or equal to in all the rest.
     metrics are always minimized: lower is better.
+    :param candidate1: First candidate in comparison.
+    :param candidate2: Second candidate in comparison.
+    :return: Whether candidate 1 dominates candidate 2.
     """
     better = False
     for obj1, obj2 in zip(candidate1.metrics, candidate2.metrics):
