@@ -45,3 +45,5 @@ disable=
 good-names=_,
 
 recursive=y
+
+fail-under=9.2

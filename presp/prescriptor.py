@@ -3,8 +3,7 @@ TODO: Can we combine these into a single class that the user has to implement?
 """
 from abc import ABC, abstractmethod
 from pathlib import Path
-import torch
-torch.nn.functional.softmax
+
 
 class Prescriptor(ABC):
     """
