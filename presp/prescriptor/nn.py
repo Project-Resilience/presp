@@ -4,16 +4,16 @@ Implementation of Prescriptor using a simple 1 hidden layer neural network with 
 import copy
 from pathlib import Path
 
-from prescriptor import Prescriptor, PrescriptorFactory
-
 import torch
+
+from presp.prescriptor.base import Prescriptor, PrescriptorFactory
 
 
 class NNPrescriptor(Prescriptor):
     """
     Simple neural network implementation of a prescriptor.
     """
-    def __init__(self, model_params: dict[str, int], device: str):
+    def __init__(self, model_params: dict[str, int], device: str = "cpu"):
         super().__init__()
         self.model_params = model_params
         self.device = device
@@ -36,7 +36,7 @@ class NNPrescriptorFactory(PrescriptorFactory):
     """
     Factory to construct NNPrescriptors
     """
-    def __init__(self, model_params: dict[str, int], device: str):
+    def __init__(self, model_params: dict[str, int], device: str = "cpu"):
         self.model_params = model_params
         self.device = device
 
