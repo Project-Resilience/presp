@@ -9,7 +9,7 @@ from tqdm import tqdm
 
 from presp.evaluator import Evaluator
 from presp import nsga2_utils
-from presp.prescriptor import Prescriptor, PrescriptorFactory
+from presp.prescriptor.prescriptor import Prescriptor, PrescriptorFactory
 
 
 class Evolution:
