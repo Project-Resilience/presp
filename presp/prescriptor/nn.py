@@ -3,6 +3,7 @@ Implementation of Prescriptor using a simple 1 hidden layer neural network with 
 """
 import copy
 from pathlib import Path
+from typing import Type
 
 import torch
 
@@ -34,9 +35,12 @@ class NNPrescriptor(Prescriptor):
 
 class NNPrescriptorFactory(PrescriptorFactory):
     """
-    Factory to construct NNPrescriptors
+    Factory to construct NNPrescriptors.
+    TODO: Since we pass prescriptor_cls into super().__init__, pylance loses knowledge that prescriptor_cls should have
+    a .model attribute...
     """
-    def __init__(self, model_params: dict[str, int], device: str = "cpu"):
+    def __init__(self, prescriptor_cls: Type[NNPrescriptor], model_params: dict[str, int], device: str = "cpu"):
+        super().__init__(prescriptor_cls)
         self.model_params = model_params
         self.device = device
 
@@ -44,7 +48,7 @@ class NNPrescriptorFactory(PrescriptorFactory):
         """
         Orthogonally initializes a neural network.
         """
-        candidate = NNPrescriptor(self.model_params, self.device)
+        candidate = self.prescriptor_cls(self.model_params, self.device)
         for layer in candidate.model:
             if isinstance(layer, torch.nn.Linear):
                 torch.nn.init.orthogonal_(layer.weight)
@@ -59,7 +63,7 @@ class NNPrescriptorFactory(PrescriptorFactory):
         Then mutates the child.
         NOTE: The child is returned in a list to fit the abstract crossover method.
         """
-        child = NNPrescriptor(self.model_params, self.device)
+        child = self.prescriptor_cls(self.model_params, self.device)
         parent1, parent2 = parents[0], parents[1]
         child.model = copy.deepcopy(parent1.model)
         for child_param, parent2_param in zip(child.model.parameters(), parent2.model.parameters()):
@@ -86,6 +90,6 @@ class NNPrescriptorFactory(PrescriptorFactory):
         """
         Loads torch model from file.
         """
-        candidate = NNPrescriptor(self.model_params, device=self.device)
+        candidate = self.prescriptor_cls(self.model_params, device=self.device)
         candidate.model.load_state_dict(torch.load(path, map_location=self.device, weights_only=True))
         return candidate

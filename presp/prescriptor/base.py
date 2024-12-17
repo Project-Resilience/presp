@@ -3,6 +3,7 @@ TODO: Can we combine these into a single class that the user has to implement?
 """
 from abc import ABC, abstractmethod
 from pathlib import Path
+from typing import Type
 
 
 class Prescriptor(ABC):
@@ -37,8 +38,12 @@ class Prescriptor(ABC):
 class PrescriptorFactory(ABC):
     """
     Abstract class in charge of creating prescriptors.
+    Takes in a prescriptor class (not instance) and creates prescriptors from it.
     Implementations should store details used to create prescriptors.
     """
+    def __init__(self, prescriptor_cls: Type[Prescriptor]):
+        self.prescriptor_cls = prescriptor_cls
+
     @abstractmethod
     def random_init(self) -> Prescriptor:
         """
