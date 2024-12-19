@@ -160,7 +160,7 @@ class Evolution:
         3. Combines the new population with the elites.
         4. Sorts the population.
         """
-        elites = self.population[:self.n_elites]
+        elites = self.population[:self.n_elites] if self.n_elites > 0 else self.population
         # Collect data and train predictor for evaluation
         self.evaluator.update_predictor(elites)
 
@@ -171,8 +171,10 @@ class Evolution:
             candidate.cand_id = f"{self.generation}_{i}"
 
         next_pop = elites + next_pop
-        self.evaluator.evaluate_population(next_pop, force=True)
+        # Force evaluation if we are updating predictor
+        self.evaluator.evaluate_population(next_pop, force=self.n_elites > 0)
         self.population = self.sort_pop(next_pop)
+        self.population = self.population[:self.population_size]
 
         self.record_results()
         if self.validator and (self.generation % self.val_interval == 0 or self.generation == self.n_generations):
