@@ -39,7 +39,6 @@ class Evolution:
         self.mutation_rate = mutation_rate
         self.mutation_factor = mutation_factor
         self.save_path = Path(save_path)
-        self.save_path.mkdir(parents=False, exist_ok=False)
         self.save_all = save_all
         self.seed_dir = Path(seed_dir) if seed_dir is not None else None
         self.val_interval = val_interval
