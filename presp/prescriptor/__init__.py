@@ -1,3 +1,6 @@
-from prescriptor.prescriptor import Prescriptor, PrescriptorFactory
+"""
+Initializes modules in the prescriptor subpackage.
+"""
+from presp.prescriptor.base import Prescriptor, PrescriptorFactory
 
-from prescriptor.nn_prescriptor import NNPrescriptor, NNPrescriptorFactory
+from presp.prescriptor.nn import NNPrescriptor, NNPrescriptorFactory

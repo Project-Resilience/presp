@@ -26,10 +26,11 @@ class Evolution:
                  mutation_factor: float,
                  save_path: str,
                  seed_dir: str,
-                 val_interval: int,
                  prescriptor_factory: PrescriptorFactory,
                  evaluator: Evaluator,
-                 validator: Evaluator):
+                 validator: Evaluator = None,
+                 val_interval: int = 0,
+                 save_all: bool = False):
 
         self.n_generations = n_generations
         self.population_size = population_size
@@ -38,7 +39,7 @@ class Evolution:
         self.mutation_rate = mutation_rate
         self.mutation_factor = mutation_factor
         self.save_path = Path(save_path)
-        self.save_path.mkdir(parents=False, exist_ok=False)
+        self.save_all = save_all
         self.seed_dir = Path(seed_dir) if seed_dir is not None else None
         self.val_interval = val_interval
 
@@ -55,7 +56,7 @@ class Evolution:
         """
         self.population = []
         if self.seed_dir is not None:
-            for seed_file in self.seed_dir.glob("*.pt"):
+            for seed_file in self.seed_dir.glob("*"):
                 candidate = self.prescriptor_factory.load(seed_file)
                 candidate.cand_id = seed_file.stem
                 self.population.append(candidate)
@@ -71,7 +72,8 @@ class Evolution:
         self.evaluator.evaluate_population(self.population)
         self.population = self.sort_pop(self.population)
         self.record_results()
-        self.validate()
+        if self.validator:
+            self.validate()
         self.generation += 1
 
     def selection(self, sorted_population: list[Prescriptor]) -> list[Prescriptor]:
@@ -119,12 +121,12 @@ class Evolution:
         Record results from population.
         """
         rows = []
-        # (self.save_path / str(self.generation)).mkdir(parents=True, exist_ok=True)
+        (self.save_path / str(self.generation)).mkdir(parents=True, exist_ok=True)
         for candidate in self.population:
-            # Save to file if it's new and rank 1.
-            # cand_gen = int(candidate.cand_id.split("_")[0])
-            # if candidate.rank == 1 and cand_gen == self.generation:
-            #     candidate.save(self.save_path / str(cand_gen) / f"{candidate.cand_id}.pt")
+            # Save to file if it's new. Only save rank 1 candidates if save_all is False.
+            cand_gen = int(candidate.cand_id.split("_")[0])
+            if (candidate.rank == 1 or self.save_all) and cand_gen == self.generation:
+                candidate.save(self.save_path / str(cand_gen) / f"{candidate.cand_id}")
             # Record candidates' results
             row = {"cand_id": candidate.cand_id, "rank": candidate.rank, "distance": candidate.distance}
             for outcome, metric in zip(candidate.outcomes, candidate.metrics):
@@ -157,7 +159,7 @@ class Evolution:
         3. Combines the new population with the elites.
         4. Sorts the population.
         """
-        elites = self.population[:self.n_elites]
+        elites = self.population[:self.n_elites] if self.n_elites > 0 else self.population
         # Collect data and train predictor for evaluation
         self.evaluator.update_predictor(elites)
 
@@ -168,11 +170,13 @@ class Evolution:
             candidate.cand_id = f"{self.generation}_{i}"
 
         next_pop = elites + next_pop
-        self.evaluator.evaluate_population(next_pop, force=True)
+        # Force evaluation if we are updating predictor
+        self.evaluator.evaluate_population(next_pop, force=self.n_elites > 0)
         self.population = self.sort_pop(next_pop)
+        self.population = self.population[:self.population_size]
 
         self.record_results()
-        if self.generation % self.val_interval == 0 or self.generation == self.n_generations:
+        if self.validator and (self.generation % self.val_interval == 0 or self.generation == self.n_generations):
             self.validate()
         self.generation += 1
 
