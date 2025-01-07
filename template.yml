@@ -1,15 +1,16 @@
 # A template evolution config file.
 
 # Evolution params
-n_generations: 100
-population_size: 100
-remove_population_pct: 0.8
-n_elites: 10
-mutation_rate: 0.1
-mutation_factor: 0.1
-save_path: results/template
-seed_dir: null
-val_interval: 5
+evolution_params:
+  n_generations: 100
+  population_size: 100
+  remove_population_pct: 0.8
+  n_elites: 10
+  mutation_rate: 0.1
+  mutation_factor: 0.1
+  save_path: results/template
+  seed_dir: null
+  val_interval: 5
 
 # Prescriptor-specific params
 prescriptor_params:

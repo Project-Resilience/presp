@@ -185,5 +185,5 @@ class Evolution:
         Runs the evolutionary process for n_generations.
         """
         self.create_initial_population()
-        for _ in tqdm(range(self.generation, self.n_generations+1)):
+        for _ in tqdm(range(self.generation, self.n_generations+1), desc="Running Evolution"):
             self.step()
