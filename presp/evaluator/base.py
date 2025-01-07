@@ -33,7 +33,7 @@ class Evaluator(ABC):
         :param force: Whether to force evaluation of all prescriptors.
         :param verbose: Whether to show a progress bar.
         """
-        iterator = population if verbose < 1 else tqdm(population, leave=False)
+        iterator = population if verbose < 1 else tqdm(population, leave=False, desc="Evaluating Population")
         for candidate in iterator:
             if candidate.metrics is None or force:
                 candidate.metrics = self.evaluate_candidate(candidate)
