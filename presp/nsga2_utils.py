@@ -5,11 +5,12 @@ from presp.prescriptor import Prescriptor
 
 
 # pylint: disable=invalid-name
-def fast_non_dominated_sort(population: list[Prescriptor]) -> tuple[list[list[Prescriptor]], list[int]]:
+def fast_non_dominated_sort(population: list[Prescriptor]) -> list[list[Prescriptor]]:
     """
-    Fast non-dominated sort algorithm from ChatGPT
+    Fast non-dominated sort algorithm from ChatGPT.
+    Sets rank of candidates in-place.
     :param population: The population to sort.
-    :return: A tuple containing a list of fronts and a list of ranks for each candidate.
+    :return: A list of fronts.
     """
     population_size = len(population)
     S = [[] for _ in range(population_size)]
@@ -58,7 +59,11 @@ def fast_non_dominated_sort(population: list[Prescriptor]) -> tuple[list[list[Pr
     # Manually increment all ranks by 1 to match NSGA-II convention
     rank = [r + 1 for r in rank]
 
-    return candidate_fronts, rank
+    # Set all ranks
+    for candidate, r in zip(population, rank):
+        candidate.rank = r
+
+    return candidate_fronts
 
 
 def calculate_crowding_distance(front: list[Prescriptor]):
