@@ -107,9 +107,7 @@ class Evolution:
         :param population: The population to sort.
         :return: The sorted population.
         """
-        fronts, ranks = nsga2_utils.fast_non_dominated_sort(population)
-        for candidate, rank in zip(population, ranks):
-            candidate.rank = rank
+        fronts = nsga2_utils.fast_non_dominated_sort(population)
         for front in fronts:
             nsga2_utils.calculate_crowding_distance(front)
 
