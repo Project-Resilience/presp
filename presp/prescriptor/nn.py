@@ -56,7 +56,10 @@ class NNPrescriptorFactory(PrescriptorFactory):
 
         return candidate
 
-    def crossover(self, parents: list[Prescriptor], mutation_rate: float, mutation_factor: float) -> list[Prescriptor]:
+    def crossover(self,
+                  parents: list[NNPrescriptor],
+                  mutation_rate: float,
+                  mutation_factor: float) -> list[NNPrescriptor]:
         """
         Crossover two parents to create a child.
         Take a random 50/50 choice of either parent's weights.
@@ -84,7 +87,7 @@ class NNPrescriptorFactory(PrescriptorFactory):
                                      param[mutate_mask].shape,
                                      device=param.device,
                                      dtype=param.dtype)
-                param[mutate_mask] += noise * param[mutate_mask]
+                param[mutate_mask] *= (1 + noise)
 
     def load(self, path: Path) -> Prescriptor:
         """
