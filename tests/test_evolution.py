@@ -88,7 +88,7 @@ class TestInitialPopulation(unittest.TestCase):
 class TestSelection(unittest.TestCase):
     """
     Tests the default parent selection (tournament selection)
-    """        
+    """
     def test_selection(self):
         """
         Tests tournament selection. We choose the min of 2 candidates, therefore with 2 candidates the smaller one
