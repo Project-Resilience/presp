@@ -30,7 +30,7 @@ class Evaluator(ABC):
         :param elites: The elite prescriptors to collect data from by using them as policies in RL.
         """
 
-    def evaluate_population(self, population: list[Prescriptor], force=False, verbose=1) -> list[np.ndarray]:
+    def evaluate_population(self, population: list[Prescriptor], force=False, verbose=1):
         """
         Evaluates an entire population of prescriptors.
         Doesn't evaluate prescriptors that already have metrics unless force is True.
