@@ -54,3 +54,38 @@ class TestParallelization(unittest.TestCase):
         for candidate, result in zip(population, parallel_results):
             cand_id = candidate.cand_id.split("_")[1]
             self.assertEqual(int(cand_id), result[0])
+
+    def test_force_no_overwrite(self):
+        """
+        Makes sure we don't overwrite metrics if we don't force evaluation.
+        """
+        n_candidates = 100
+        population = [IdPrescriptor(f"0_{i}") for i in range(n_candidates)]
+        for i, candidate in enumerate(population):
+            if i % 2 == 0:
+                candidate.metrics = np.array([-999])
+
+        evaluator = IdEvaluator()
+        evaluator.evaluate_population(population, force=False)
+
+        for i, candidate in enumerate(population):
+            if i % 2 == 0:
+                self.assertEqual(-999, candidate.metrics[0])
+            else:
+                self.assertEqual(i, candidate.metrics[0])
+
+    def test_force_overwrite(self):
+        """
+        Makes sure we overwrite metrics when we want to force evaluation.
+        """
+        n_candidates = 100
+        population = [IdPrescriptor(f"0_{i}") for i in range(n_candidates)]
+        for i, candidate in enumerate(population):
+            if i % 2 == 0:
+                candidate.metrics = np.array([-999])
+
+        evaluator = IdEvaluator()
+        evaluator.evaluate_population(population, force=True)
+
+        for i, candidate in enumerate(population):
+            self.assertEqual(i, candidate.metrics[0])
