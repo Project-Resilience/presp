@@ -85,7 +85,7 @@ class Evolution:
         """
         idx1 = min(random.choices(range(len(sorted_population)), k=2))
         idx2 = min(random.choices(range(len(sorted_population)), k=2))
-        return sorted_population[idx1], sorted_population[idx2]
+        return [sorted_population[idx1], sorted_population[idx2]]
 
     def create_pop(self, population: list[Prescriptor]) -> list[Prescriptor]:
         """

@@ -18,4 +18,4 @@ class DummyEvaluator(Evaluator):
         pass
 
     def evaluate_candidate(self, candidate: DummyPrescriptor) -> np.ndarray:
-        return candidate.forward(None) * 10
+        return np.array([candidate.forward(None) * 10])

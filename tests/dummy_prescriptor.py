@@ -21,7 +21,8 @@ class DummyPrescriptor(Prescriptor):
         return self.number
 
     def save(self, path):
-        pass
+        with open(path, "w", encoding="utf-8") as file:
+            file.write(str(self.number))
 
 
 class DummyFactory(PrescriptorFactory):
@@ -35,7 +36,10 @@ class DummyFactory(PrescriptorFactory):
     def random_init(self) -> DummyPrescriptor:
         return DummyPrescriptor()
 
-    def crossover(self, parents: list[Prescriptor], mutation_rate: float, mutation_factor: float) -> list[Prescriptor]:
+    def crossover(self,
+                  parents: list[DummyPrescriptor],
+                  mutation_rate: float,
+                  mutation_factor: float) -> list[DummyPrescriptor]:
         numb = np.mean([parent.number for parent in parents], axis=0)
         if np.random.rand(1) < mutation_rate:
             numb += np.random.normal(0, mutation_factor)
@@ -43,5 +47,9 @@ class DummyFactory(PrescriptorFactory):
         child.number = numb
         return [child]
 
-    def load(self, path) -> Prescriptor:
-        pass
+    def load(self, path) -> DummyPrescriptor:
+        with open(path, "r", encoding="utf-8") as file:
+            number = float(file.read())
+        candidate = DummyPrescriptor()
+        candidate.number = number
+        return candidate
