@@ -142,8 +142,11 @@ class Evolution:
         """
         rows = []
         (self.save_path / "validation").mkdir(parents=True, exist_ok=True)
-        for candidate in self.population:
-            val_metrics = self.validator.evaluate_candidate(candidate)
+
+        # Get validation results manually without setting cand's metrics or outcomes
+        valid_results = self.validator.evaluate_subset(self.population, verbose=1)
+
+        for candidate, val_metrics in zip(self.population, valid_results):
             row = {"cand_id": candidate.cand_id}
             for outcome, metric in zip(self.validator.outcomes, val_metrics):
                 row[outcome] = metric
