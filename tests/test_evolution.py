@@ -117,3 +117,31 @@ class TestSelection(unittest.TestCase):
 
         self.assertTrue(np.isclose(0.75, counts[0] / (n * 2), atol=0.01))
         self.assertTrue(np.isclose(0.25, counts[1] / (n * 2), atol=0.01))
+
+
+class TestCreatePop(unittest.TestCase):
+    """
+    Tests the population creation function in evolution. Makes sure remove_population_pct works.
+    """
+    def test_remove_pop_pct(self):
+        """
+        Ensures that any children created have parents from the top half of the population.
+        """
+        n_cands = 10000
+
+        factory = DummyFactory(DummyPrescriptor)
+        evaluator = DummyEvaluator()
+        evolution = Evolution(10, n_cands, 0.5, 2, 0.1, 0.1, "tests/temp", None, factory, evaluator)
+
+        population = [DummyPrescriptor() for _ in range(n_cands)]
+        for i, candidate in enumerate(population):
+            candidate.cand_id = f"0_{i}"
+
+        next_pop = evolution.create_pop(population, 0.5)
+
+        for candidate in next_pop:
+            parents = candidate.parents
+            parent_idxs = [int(parent.split("_")[1]) for parent in parents]
+            for parent_idx in parent_idxs:
+                self.assertIn(parent_idx, range(int(0.5 * n_cands)))
+                self.assertNotIn(parent_idx, range(int(0.5 * n_cands), n_cands))
