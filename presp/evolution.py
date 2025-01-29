@@ -87,16 +87,20 @@ class Evolution:
         idx2 = min(random.choices(range(len(sorted_population)), k=2))
         return [sorted_population[idx1], sorted_population[idx2]]
 
-    def create_pop(self, population: list[Prescriptor]) -> list[Prescriptor]:
+    def create_pop(self, population: list[Prescriptor], remove_population_pct: float = 0) -> list[Prescriptor]:
         """
-        Creates a population by selecting parents, crossing them over, then mutating the children.
+        Creates a population by selecting parents from the top candidates, crossing them over,
+        then mutating the children.
         :param population: The filtered population to select parents from.
+        NOTE: The population must be sorted.
+        :param remove_population_pct: The percentage of the population to remove from the bottom.
         :return: The new population
         """
+        top_pop = population[:int(len(population) * (1 - remove_population_pct))]
         next_pop = []
         n_children = self.population_size - self.n_elites
         while len(next_pop) < n_children:
-            parents = self.selection(population)
+            parents = self.selection(top_pop)
             children = self.prescriptor_factory.crossover(parents, self.mutation_rate, self.mutation_factor)
             next_pop.extend(children)
         return next_pop[:n_children]
@@ -164,8 +168,7 @@ class Evolution:
         # Collect data and train predictor for evaluation
         self.evaluator.update_predictor(elites)
 
-        n_keep = int(self.population_size * (1 - self.remove_population_pct))
-        next_pop = self.create_pop(self.population[:n_keep])
+        next_pop = self.create_pop(self.population, self.remove_population_pct)
         # Tag new population with candidate IDs
         for i, candidate in enumerate(next_pop):
             candidate.cand_id = f"{self.generation}_{i}"

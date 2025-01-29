@@ -16,6 +16,7 @@ class DummyPrescriptor(Prescriptor):
     def __init__(self):
         super().__init__()
         self.number = np.random.rand(1)
+        self.parents = []
 
     def forward(self, context):
         return self.number
@@ -44,6 +45,8 @@ class DummyFactory(PrescriptorFactory):
         if np.random.rand(1) < mutation_rate:
             numb += np.random.normal(0, mutation_factor)
         child = DummyPrescriptor()
+        # To keep track of ancestry for testing purposes
+        child.parents = [parent.cand_id for parent in parents]
         child.number = numb
         return [child]
 
