@@ -53,8 +53,7 @@ class Evaluator(ABC):
         :return: The metrics of the population.
         """
         if self.n_jobs != 1:
-            num_jobs = self.n_jobs if self.n_jobs != -1 else len(population)
-            pop_results = self.parallel_evaluation(population, n_jobs=num_jobs)
+            pop_results = self.parallel_evaluation(population, n_jobs=self.n_jobs)
         else:
             pop_results = self.sequential_evaluation(population, verbose=verbose)
         return pop_results

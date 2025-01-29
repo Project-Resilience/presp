@@ -29,7 +29,7 @@ class IdEvaluator(Evaluator):
     Dummy evaluator that returns the id of the candidate as its metric.
     """
     def __init__(self):
-        super().__init__(outcomes=["id"], n_jobs=2)
+        super().__init__(outcomes=["id"], n_jobs=-1)
 
     def update_predictor(self, elites):
         pass
