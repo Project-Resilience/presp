@@ -145,3 +145,49 @@ class TestCreatePop(unittest.TestCase):
             for parent_idx in parent_idxs:
                 self.assertIn(parent_idx, range(int(0.5 * n_cands)))
                 self.assertNotIn(parent_idx, range(int(0.5 * n_cands), n_cands))
+
+
+class TestElites(unittest.TestCase):
+    """
+    Tests that elites stay elite.
+    """
+    def setUp(self):
+        if Path("tests/temp").exists():
+            shutil.rmtree(Path("tests/temp"))
+
+    def tearDown(self):
+        if Path("tests/temp").exists():
+            shutil.rmtree(Path("tests/temp"))
+
+    def test_elites_consistent(self):
+        """
+        Checks that when we force elites to always have the best metrics, they stay elite and everything else is created
+        fresh every generation.
+        """
+        factory = DummyFactory(DummyPrescriptor)
+        evaluator = DummyEvaluator()
+        evolution = Evolution(10, 100, 0.5, 10, 0.1, 0.1, "tests/temp", None, factory, evaluator)
+        
+        # Create initial pop, replace some metrics with -999 to make sure they're always elite. Then re-sort.
+        evolution.create_initial_population()
+        elite_ids = [f"1_{i}" for i in range(10)]
+        for candidate in evolution.population:
+            if candidate.cand_id in elite_ids:
+                candidate.metrics = np.array([-999])
+        evolution.population = evolution.sort_pop(evolution.population)
+
+        for i in range(2, 11):
+            # Step, then set elite metrics to -999 again. Resort afterwards.
+            evolution.step()
+            for candidate in evolution.population:
+                if candidate.cand_id in elite_ids:
+                    candidate.metrics = np.array([-999])
+            evolution.population = evolution.sort_pop(evolution.population)
+
+            # Check that elites are elite and non-elites are non-elite.
+            for j, candidate in enumerate(evolution.population):
+                if j < evolution.n_elites:
+                    self.assertIn(candidate.cand_id, elite_ids)
+                else:
+                    self.assertNotIn(candidate.cand_id, elite_ids)
+                    self.assertEqual(candidate.cand_id.split("_")[0], str(i))
