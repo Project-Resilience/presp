@@ -15,20 +15,23 @@ class CartPoleEvaluator(Evaluator):
     We perform direct evolution so we do not implement update_predictor.
     evaluate_candidate simply runs the candidate prescriptor for n_steps in n_envs environments and returns the average.
     """
-    def __init__(self, n_steps: int, n_envs: int):
-        super().__init__(outcomes=["score"])
-        self.n_steps = n_steps
+    def __init__(self, n_jobs: int, n_envs: int):
+        super().__init__(outcomes=["score"], n_jobs=n_jobs)
         self.n_envs = n_envs
-        self.env = gymnasium.make_vec("CartPole-v1", sutton_barto_reward=True, num_envs=n_envs)
 
     def update_predictor(self, elites):
         pass
 
     def evaluate_candidate(self, candidate: CartPolePrescriptor):
-        total_rewards = np.zeros(self.n_envs)
-        obs, _ = self.env.reset()
-        for _ in range(self.n_steps):
-            action = candidate.forward(torch.tensor(obs, dtype=torch.float32, device=candidate.device))
-            obs, reward, _, _, _ = self.env.step(action)
-            total_rewards += reward
-        return np.array([-1 * (total_rewards / self.n_steps).mean()])
+        total_reward = 0
+        for i in range(self.n_envs):
+            env = gymnasium.make("CartPole-v1")
+            obs, _ = env.reset(seed=i)
+            episode_over = False
+            while not episode_over:
+                action = candidate.forward(torch.tensor(obs, dtype=torch.float32, device=candidate.device))
+                obs, reward, done, truncated, _ = env.step(action.item())
+                episode_over = done or truncated
+                total_reward += reward
+            env.close()
+        return np.array([-1 * total_reward / self.n_envs])

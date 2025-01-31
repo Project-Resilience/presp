@@ -35,7 +35,7 @@ class TestCartPole(unittest.TestCase):
         evolution = Evolution(prescriptor_factory=factory, evaluator=evaluator, **config["evolution_params"])
         evolution.run_evolution()
 
-        with open("temp/10.csv", "r", encoding="utf-8") as csvfile:
+        with open("tests/temp/10.csv", "r", encoding="utf-8") as csvfile:
             rows = list(csv.reader(csvfile, delimiter=','))
 
             # Checks the results file is 101x4
@@ -46,7 +46,7 @@ class TestCartPole(unittest.TestCase):
             # Checks that the first candidate in the file has rank 1, inf distance, and 0 score
             self.assertEqual(rows[1][1], "1")
             self.assertEqual(rows[1][2], "inf")
-            self.assertEqual(rows[1][3], "-0.0")
+            self.assertEqual(rows[1][3], "-500.0")
 
     def tearDown(self):
         if Path("temp").exists():
