@@ -8,6 +8,9 @@ import numpy as np
 from presp.evaluator import Evaluator
 from presp.prescriptor import Prescriptor
 
+from examples.cartpole.evaluator import CartPoleEvaluator
+from examples.cartpole.prescriptor import CartPolePrescriptorFactory
+
 
 class IdPrescriptor(Prescriptor):
     """
@@ -89,3 +92,20 @@ class TestParallelization(unittest.TestCase):
 
         for i, candidate in enumerate(population):
             self.assertEqual(i, candidate.metrics[0])
+
+    def test_same_as_sequential(self):
+        """
+        We run the same population through the evaluator twice, once in parallel and once sequentially to see
+        if they produce the same results.
+        """
+        factory = CartPolePrescriptorFactory()
+        population = [factory.random_init() for _ in range(100)]
+
+        sequential_evaluator = CartPoleEvaluator(n_jobs=1, n_envs=10)
+        sequential_results = sequential_evaluator.evaluate_subset(population)
+
+        parallel_evaluator = CartPoleEvaluator(n_jobs=4, n_envs=10)
+        parallel_results = parallel_evaluator.evaluate_subset(population)
+
+        for sequential, parallel in zip(sequential_results, parallel_results):
+            self.assertTrue(np.equal(sequential, parallel))
