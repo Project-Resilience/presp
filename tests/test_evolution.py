@@ -167,7 +167,7 @@ class TestElites(unittest.TestCase):
         factory = DummyFactory(DummyPrescriptor)
         evaluator = DummyEvaluator()
         evolution = Evolution(10, 100, 0.5, 10, 0.1, 0.1, "tests/temp", None, factory, evaluator)
-        
+
         # Create initial pop, replace some metrics with -999 to make sure they're always elite. Then re-sort.
         evolution.create_initial_population()
         elite_ids = [f"1_{i}" for i in range(10)]
