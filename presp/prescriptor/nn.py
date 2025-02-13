@@ -47,12 +47,18 @@ class NNPrescriptorFactory(PrescriptorFactory):
     def random_init(self) -> NNPrescriptor:
         """
         Orthogonally initializes a neural network.
+        We orthogonally init all the linear layers except the last one which is standard normally initialized.
+        Fill the biases with the standard normal distribution as well.
         """
         candidate = self.prescriptor_cls(self.model_params, self.device)
-        for layer in candidate.model:
+        for i, layer in enumerate(candidate.model):
             if isinstance(layer, torch.nn.Linear):
-                torch.nn.init.orthogonal_(layer.weight)
-                layer.bias.data.fill_(0.01)
+                # TODO: This relies on the model ending with a linear layer which we may not guarantee later!
+                if i != len(candidate.model) - 1:
+                    torch.nn.init.orthogonal_(layer.weight)
+                else:
+                    torch.nn.init.normal_(layer.weight, 0, 1)
+                layer.bias.data.fill_(torch.normal(0, 1, size=(1,)).item())
 
         return candidate
 

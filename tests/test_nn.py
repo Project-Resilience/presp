@@ -14,9 +14,18 @@ def init_uniform(model, c):
     """
     Initializes a model uniformly by filling it with constant c.
     """
-    for parameter in model.parameters():
-        with torch.no_grad():
+    with torch.no_grad():
+        for parameter in model.parameters():
             parameter.fill_(c)
+
+
+def check_orthogonal(weight: torch.Tensor, atol: float) -> bool:
+    """
+    See if WTW = I to a certain degree of tolerance.
+    """
+    identity = torch.eye(weight.shape[1])
+    wtw = torch.matmul(weight.T, weight)
+    return torch.allclose(wtw, identity, atol=atol)
 
 
 class TestNN(unittest.TestCase):
@@ -28,6 +37,41 @@ class TestNN(unittest.TestCase):
         random.seed(42)
         np.random.seed(42)
         torch.manual_seed(42)
+
+    def test_init(self):
+        """
+        Checks that the first layer is initialized orthogonally and the last layer is initialized normally. Also checks
+        that the biases are initialized normally.
+        """
+        factory = NNPrescriptorFactory(NNPrescriptor, {"in_size": 12, "hidden_size": 16, "out_size": 1})
+        candidates = [factory.random_init() for _ in range(100000)]
+
+        last_layer_params = []
+        biases = []
+
+        for candidate in candidates:
+            for i, layer in enumerate(candidate.model):
+                if isinstance(layer, torch.nn.Linear):
+                    if i != len(candidate.model) - 1:
+                        self.assertTrue(check_orthogonal(layer.weight.data, 1e-4))
+                    else:
+                        self.assertFalse(check_orthogonal(layer.weight.data, 1e-4))
+                        last_layer_params.append(layer.weight.data)
+                    biases.append(layer.bias.data)
+
+        # Check that the last layer is normally distributed
+        last_layer_params = torch.cat([p.flatten() for p in last_layer_params])
+        last_layer_mean = torch.mean(last_layer_params).item()
+        last_layer_std = torch.std(last_layer_params).item()
+        self.assertAlmostEqual(last_layer_mean, 0, places=2)
+        self.assertAlmostEqual(last_layer_std, 1, places=2)
+
+        # Check that the biases are normally distributed
+        biases = torch.cat([b.flatten() for b in biases])
+        bias_mean = torch.mean(biases).item()
+        bias_std = torch.std(biases).item()
+        self.assertAlmostEqual(bias_mean, 0, places=2)
+        self.assertAlmostEqual(bias_std, 1, places=2)
 
     def test_crossover(self):
         """
