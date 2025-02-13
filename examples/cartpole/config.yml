@@ -3,10 +3,10 @@ evolution_params:
   n_generations: 10
   population_size: 100
   remove_population_pct: 0.8
-  n_elites: 0
+  n_elites: 10
   mutation_rate: 0.1
   mutation_factor: 0.1
-  save_path: temp
+  save_path: tests/temp
   seed_dir: null
 
 # Prescriptor-specific params
@@ -15,5 +15,5 @@ prescriptor_params:
 
 # Evaluation params
 eval_params:
-  n_steps: 1000
-  n_envs: 4
+  n_envs: 30
+  n_jobs: -1

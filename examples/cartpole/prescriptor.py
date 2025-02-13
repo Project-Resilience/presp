@@ -17,7 +17,7 @@ class CartPolePrescriptor(NNPrescriptor):
 
     def forward(self, context: torch.Tensor) -> torch.Tensor:
         logits = self.model(context)
-        actions = (torch.sigmoid(logits) > 0.5).squeeze().int().cpu().numpy()
+        actions = (torch.sigmoid(logits) > 0.5).squeeze().int()
         return actions
 
 
@@ -27,5 +27,5 @@ class CartPolePrescriptorFactory(NNPrescriptorFactory):
     observation/action space.
     """
     def __init__(self, device: str = "cpu"):
-        model_params = {"in_size": 4, "hidden_size": 16, "out_size": 1}
+        model_params = {"in_size": 4, "hidden_size": 64, "out_size": 1}
         super().__init__(CartPolePrescriptor, model_params, device)
