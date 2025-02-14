@@ -12,6 +12,7 @@ class Prescriptor(ABC):
     """
     def __init__(self):
         self.cand_id = ""
+        self.parents = None
         self.metrics = None
         self.outcomes = None
         self.rank = None

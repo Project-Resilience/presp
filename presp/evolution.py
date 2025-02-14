@@ -102,6 +102,12 @@ class Evolution:
         while len(next_pop) < n_children:
             parents = self.selection(top_pop)
             children = self.prescriptor_factory.crossover(parents, self.mutation_rate, self.mutation_factor)
+
+            # Tag children with parent ids
+            parent_ids = [parent.cand_id for parent in parents]
+            for child in children:
+                child.parents = parent_ids
+
             next_pop.extend(children)
         return next_pop[:n_children]
 

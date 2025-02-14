@@ -28,11 +28,10 @@ def check_orthogonal(weight: torch.Tensor, atol: float) -> bool:
     return torch.allclose(wtw, identity, atol=atol)
 
 
-class TestNN(unittest.TestCase):
+class TestNNInit(unittest.TestCase):
     """
-    Tests the neural net prescriptor
+    Tests the initialization of the neural net prescriptor
     """
-
     def setUp(self):
         random.seed(42)
         np.random.seed(42)
@@ -73,6 +72,16 @@ class TestNN(unittest.TestCase):
         self.assertAlmostEqual(bias_mean, 0, places=2)
         self.assertAlmostEqual(bias_std, 1, places=2)
 
+
+class TestNNCrossover(unittest.TestCase):
+    """
+    Tests the crossover method of the neural net prescriptor factory.
+    """
+    def setUp(self):
+        random.seed(42)
+        np.random.seed(42)
+        torch.manual_seed(42)
+
     def test_crossover(self):
         """
         Tests that we get 50/50 parameters from model 0 and model 1 after crossover.
@@ -97,6 +106,16 @@ class TestNN(unittest.TestCase):
                 self.assertTrue(torch.all(torch.logical_or(parameter.data == 0, parameter.data == 1)))
 
         self.assertAlmostEqual(count / total_num, 0.5, places=2)
+
+
+class TestNNMutation(unittest.TestCase):
+    """
+    Tests mutation for the neural net prescriptor.
+    """
+    def setUp(self):
+        random.seed(42)
+        np.random.seed(42)
+        torch.manual_seed(42)
 
     def test_mutate(self):
         """
