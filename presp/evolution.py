@@ -136,7 +136,12 @@ class Evolution:
             if (candidate.rank == 1 or self.save_all) and cand_gen == self.generation:
                 candidate.save(self.save_path / str(cand_gen) / f"{candidate.cand_id}")
             # Record candidates' results
-            row = {"cand_id": candidate.cand_id, "rank": candidate.rank, "distance": candidate.distance}
+            row = {
+                "cand_id": candidate.cand_id,
+                "parents": candidate.parents,
+                "rank": candidate.rank,
+                "distance": candidate.distance
+            }
             for outcome, metric in zip(candidate.outcomes, candidate.metrics):
                 row[outcome] = metric
             rows.append(row)
