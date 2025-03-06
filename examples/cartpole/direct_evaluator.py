@@ -5,8 +5,8 @@ import gymnasium
 import numpy as np
 import torch
 
-from examples.cartpole.prescriptor import CartPolePrescriptor
 from presp.evaluator import Evaluator
+from presp.prescriptor import NNPrescriptor
 
 
 class CartPoleEvaluator(Evaluator):
@@ -22,14 +22,16 @@ class CartPoleEvaluator(Evaluator):
     def update_predictor(self, elites):
         pass
 
-    def evaluate_candidate(self, candidate: CartPolePrescriptor):
+    def evaluate_candidate(self, candidate: NNPrescriptor):
         total_reward = 0
         for i in range(self.n_envs):
             env = gymnasium.make("CartPole-v1")
             obs, _ = env.reset(seed=i)
             episode_over = False
             while not episode_over:
-                action = candidate.forward(torch.tensor(obs, dtype=torch.float32, device=candidate.device))
+                obs = torch.tensor(obs, dtype=torch.float32, device=candidate.device)
+                prob = candidate.forward(obs)
+                action = (prob > 0.5).int()
                 obs, reward, done, truncated, _ = env.step(action.item())
                 episode_over = done or truncated
                 total_reward += reward

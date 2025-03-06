@@ -25,12 +25,28 @@ class Evolution:
                  mutation_rate: float,
                  mutation_factor: float,
                  save_path: str,
-                 seed_dir: str,
                  prescriptor_factory: PrescriptorFactory,
                  evaluator: Evaluator,
+                 seed_dir: str = None,
                  validator: Evaluator = None,
                  val_interval: int = 0,
                  save_all: bool = False):
+        """
+        :param n_generations: The number of generations to run evolution for. Generations start counting at 1.
+        :param population_size: The size of the total population including elites.
+        :param remove_population_pct: The bottom percentage of the population to not use as parents.
+        :param n_elites: The number of elites to keep from the previous generation. When this is set to 0, all
+        candidates are considered elite.
+        :param mutation_rate: The rate at which to mutate each parameter.
+        :param mutation_factor: The factor by which to mutate each parameter.
+        :param save_path: The path to save the results to.
+        :param prescriptor_factory: The factory to create prescriptors with.
+        :param evaluator: The evaluator used to evaluate the prescriptors.
+        :param seed_dir: Optional path to a directory containing seed candidates.
+        :param validator: Optional evaluator class used to validate the population every val_interval steps.
+        :param val_interval: The interval at which to validate the population.
+        :param save_all: Whether to save all candidates or just rank 1 candidates.
+        """
 
         self.n_generations = n_generations
         self.population_size = population_size
@@ -100,8 +116,17 @@ class Evolution:
         next_pop = []
         n_children = self.population_size - self.n_elites
         while len(next_pop) < n_children:
+            # Select, crossover, mutate
             parents = self.selection(top_pop)
-            children = self.prescriptor_factory.crossover(parents, self.mutation_rate, self.mutation_factor)
+            children = self.prescriptor_factory.crossover(parents)
+            for child in children:
+                self.prescriptor_factory.mutation(child, self.mutation_rate, self.mutation_factor)
+
+            # Tag children with parent ids
+            parent_ids = [parent.cand_id for parent in parents]
+            for child in children:
+                child.parents = parent_ids
+
             next_pop.extend(children)
         return next_pop[:n_children]
 
@@ -128,9 +153,14 @@ class Evolution:
             # Save to file if it's new. Only save rank 1 candidates if save_all is False.
             cand_gen = int(candidate.cand_id.split("_")[0])
             if (candidate.rank == 1 or self.save_all) and cand_gen == self.generation:
-                candidate.save(self.save_path / str(cand_gen) / f"{candidate.cand_id}")
+                self.prescriptor_factory.save(candidate, (self.save_path / str(cand_gen) / f"{candidate.cand_id}"))
             # Record candidates' results
-            row = {"cand_id": candidate.cand_id, "rank": candidate.rank, "distance": candidate.distance}
+            row = {
+                "cand_id": candidate.cand_id,
+                "parents": candidate.parents,
+                "rank": candidate.rank,
+                "distance": candidate.distance
+            }
             for outcome, metric in zip(candidate.outcomes, candidate.metrics):
                 row[outcome] = metric
             rows.append(row)
