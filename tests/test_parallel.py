@@ -4,12 +4,13 @@ Unit tests to see if parallel evaluation is working correctly.
 import unittest
 
 import numpy as np
+import yaml
 
 from presp.evaluator import Evaluator
 from presp.prescriptor import Prescriptor
+from presp.prescriptor.nn import NNPrescriptorFactory
 
-from examples.cartpole.evaluator import CartPoleEvaluator
-from examples.cartpole.prescriptor import CartPolePrescriptorFactory
+from examples.cartpole.direct_evaluator import CartPoleEvaluator
 
 
 class IdPrescriptor(Prescriptor):
@@ -97,8 +98,12 @@ class TestParallelization(unittest.TestCase):
         """
         We run the same population through the evaluator twice, once in parallel and once sequentially to see
         if they produce the same results.
+        We use the cartpole prescriptor and evaluator for this test.
         """
-        factory = CartPolePrescriptorFactory()
+        with open("examples/cartpole/config.yml", "r", encoding="utf-8") as f:
+            config = yaml.safe_load(f)
+
+        factory = NNPrescriptorFactory(**config["prescriptor_params"])
         population = [factory.random_init() for _ in range(100)]
 
         sequential_evaluator = CartPoleEvaluator(n_jobs=1, n_envs=10)

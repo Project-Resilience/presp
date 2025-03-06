@@ -36,8 +36,8 @@ class TestInitialPopulation(unittest.TestCase):
         Also makes sure the generation is set properly.
         """
         evaluator = DummyEvaluator()
-        factory = DummyFactory(DummyPrescriptor)
-        evolution = Evolution(10, 10, 0.1, 2, 0.1, 0.1, "tests/temp", None, factory, evaluator)
+        factory = DummyFactory()
+        evolution = Evolution(10, 10, 0.1, 2, 0.1, 0.1, "tests/temp", factory, evaluator)
         evolution.create_initial_population()
 
         self.assertEqual(len(evolution.population), 10)
@@ -55,16 +55,16 @@ class TestInitialPopulation(unittest.TestCase):
         Adds some seeds to the initial population and checks they are loaded correctly.
         Also checks that the rest of the population is initialized randomly.
         """
+        factory = DummyFactory()
         seed_dir = Path("tests/seeds")
         seed_dir.mkdir()
         for i in range(8):
             candidate = DummyPrescriptor()
             candidate.number = i
-            candidate.save(seed_dir / f"0_{i}.txt")
+            factory.save(candidate, seed_dir / f"0_{i}.txt")
 
         evaluator = DummyEvaluator()
-        factory = DummyFactory(DummyPrescriptor)
-        evolution = Evolution(10, 10, 0.1, 2, 0.1, 0.1, "tests/temp", "tests/seeds", factory, evaluator)
+        evolution = Evolution(10, 10, 0.1, 2, 0.1, 0.1, "tests/temp", factory, evaluator, seed_dir="tests/seeds")
         evolution.create_initial_population()
 
         # Make sure population is the right size
@@ -98,9 +98,9 @@ class TestSelection(unittest.TestCase):
         random.seed(42)
         np.random.seed(42)
 
-        factory = DummyFactory(DummyPrescriptor)
+        factory = DummyFactory()
         evaluator = DummyEvaluator()
-        evolution = Evolution(10, 10, 0.1, 2, 0.1, 0.1, "tests/temp", None, factory, evaluator)
+        evolution = Evolution(10, 10, 0.1, 2, 0.1, 0.1, "tests/temp", factory, evaluator)
 
         cand_0 = DummyPrescriptor()
         cand_0.number = 0
@@ -129,9 +129,9 @@ class TestCreatePop(unittest.TestCase):
         """
         n_cands = 10000
 
-        factory = DummyFactory(DummyPrescriptor)
+        factory = DummyFactory()
         evaluator = DummyEvaluator()
-        evolution = Evolution(10, n_cands, 0.5, 2, 0.1, 0.1, "tests/temp", None, factory, evaluator)
+        evolution = Evolution(10, n_cands, 0.5, 2, 0.1, 0.1, "tests/temp", factory, evaluator)
 
         population = [DummyPrescriptor() for _ in range(n_cands)]
         for i, candidate in enumerate(population):
@@ -164,9 +164,9 @@ class TestElites(unittest.TestCase):
         Checks that when we force elites to always have the best metrics, they stay elite and everything else is created
         fresh every generation.
         """
-        factory = DummyFactory(DummyPrescriptor)
+        factory = DummyFactory()
         evaluator = DummyEvaluator()
-        evolution = Evolution(10, 100, 0.5, 10, 0.1, 0.1, "tests/temp", None, factory, evaluator)
+        evolution = Evolution(10, 100, 0.5, 10, 0.1, 0.1, "tests/temp", factory, evaluator)
 
         # Create initial pop, replace some metrics with -999 to make sure they're always elite. Then re-sort.
         evolution.create_initial_population()

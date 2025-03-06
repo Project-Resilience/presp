@@ -9,8 +9,8 @@ import unittest
 
 import yaml
 
-from examples.cartpole.evaluator import CartPoleEvaluator
-from examples.cartpole.prescriptor import CartPolePrescriptorFactory
+from examples.cartpole.direct_evaluator import CartPoleEvaluator
+from presp.prescriptor.nn import NNPrescriptorFactory
 from presp.evolution import Evolution
 
 
@@ -29,7 +29,7 @@ class TestCartPole(unittest.TestCase):
         with open("examples/cartpole/config.yml", "r", encoding="utf-8") as f:
             config = yaml.safe_load(f)
 
-        factory = CartPolePrescriptorFactory(**config["prescriptor_params"])
+        factory = NNPrescriptorFactory(**config["prescriptor_params"])
         evaluator = CartPoleEvaluator(**config["eval_params"])
 
         evolution = Evolution(prescriptor_factory=factory, evaluator=evaluator, **config["evolution_params"])
@@ -38,15 +38,15 @@ class TestCartPole(unittest.TestCase):
         with open("tests/temp/10.csv", "r", encoding="utf-8") as csvfile:
             rows = list(csv.reader(csvfile, delimiter=','))
 
-            # Checks the results file is 101x4
+            # Checks the results file is 101x5
             self.assertEqual(len(rows), 101)
             for row in rows:
-                self.assertEqual(len(row), 4)
+                self.assertEqual(len(row), 5)
 
-            # Checks that the first candidate in the file has rank 1, inf distance, and 0 score
-            self.assertEqual(rows[1][1], "1")
-            self.assertEqual(rows[1][2], "inf")
-            self.assertEqual(rows[1][3], "-500.0")
+            # Checks that the first candidate in the file has rank 1, inf distance, and the highest score possible
+            self.assertEqual(rows[1][2], "1")
+            self.assertEqual(rows[1][3], "inf")
+            self.assertEqual(rows[1][4], "-500.0")
 
     def tearDown(self):
         if Path("temp").exists():

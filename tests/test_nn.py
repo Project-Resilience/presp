@@ -1,5 +1,6 @@
 """
 Tests the implementation of the neural network prescriptor.
+TODO: Make the tolerances based on confidence interval.
 """
 import random
 import unittest
@@ -7,7 +8,7 @@ import unittest
 import numpy as np
 import torch
 
-from presp.prescriptor import NNPrescriptor, NNPrescriptorFactory
+from presp.prescriptor import NNPrescriptorFactory
 
 
 def init_uniform(model, c):
@@ -28,6 +29,30 @@ def check_orthogonal(weight: torch.Tensor, atol: float) -> bool:
     return torch.allclose(wtw, identity, atol=atol)
 
 
+def check_dist(weight: torch.Tensor, mean: float, std: float, atol: float) -> bool:
+    """
+    Check if the weight has correct mean and standard deviation.
+    """
+    weight_mean = torch.mean(weight).item()
+    weight_std = torch.std(weight).item()
+    return torch.isclose(weight_mean, mean, atol=atol) and torch.isclose(weight_std, std, atol=atol)
+
+
+def create_factory() -> NNPrescriptorFactory:
+    """
+    Creates a factory with a simple model.
+    """
+    factory_params = {
+        "model_params": [
+            {"type": "linear", "in_features": 12, "out_features": 16},
+            {"type": "tanh"},
+            {"type": "linear", "in_features": 16, "out_features": 1},
+            {"type": "sigmoid"}
+        ]
+    }
+    return NNPrescriptorFactory(**factory_params)
+
+
 class TestNNInit(unittest.TestCase):
     """
     Tests the initialization of the neural net prescriptor
@@ -42,16 +67,17 @@ class TestNNInit(unittest.TestCase):
         Checks that the first layer is initialized orthogonally and the last layer is initialized normally. Also checks
         that the biases are initialized normally.
         """
-        factory = NNPrescriptorFactory(NNPrescriptor, {"in_size": 12, "hidden_size": 16, "out_size": 1})
+        factory = create_factory()
         candidates = [factory.random_init() for _ in range(100000)]
 
         last_layer_params = []
         biases = []
 
         for candidate in candidates:
-            for i, layer in enumerate(candidate.model):
+            linear_layers = [layer for layer in candidate.model if isinstance(layer, torch.nn.Linear)]
+            for i, layer in enumerate(linear_layers):
                 if isinstance(layer, torch.nn.Linear):
-                    if i != len(candidate.model) - 1:
+                    if i < len(linear_layers) - 1:
                         self.assertTrue(check_orthogonal(layer.weight.data, 1e-4))
                     else:
                         self.assertFalse(check_orthogonal(layer.weight.data, 1e-4))
@@ -87,7 +113,7 @@ class TestNNCrossover(unittest.TestCase):
         Tests that we get 50/50 parameters from model 0 and model 1 after crossover.
         """
         # Fill a candidate with all 0 and all 1
-        factory = NNPrescriptorFactory(NNPrescriptor, {"in_size": 12, "hidden_size": 64, "out_size": 1})
+        factory = create_factory()
         parent0 = factory.random_init()
         parent1 = factory.random_init()
         init_uniform(parent0.model, 0)
@@ -98,7 +124,7 @@ class TestNNCrossover(unittest.TestCase):
         total_num = 0
         n = 100
         for _ in range(n):
-            child = factory.crossover([parent0, parent1], 0, 0)[0]
+            child = factory.crossover([parent0, parent1])[0]
             for parameter in child.model.parameters():
                 count += torch.sum(parameter.data).item()
                 total_num += parameter.numel()
@@ -122,30 +148,26 @@ class TestNNMutation(unittest.TestCase):
         Checks if the mean and standard deviation of the mutated parameters are correct.
         We are using gaussian percent noise with std = f. If we initialize models to all be c then:
         params ~ c * (1 + N(0, f)) = c * N(1, f) = N(c, f*c)
-        We try this with 3 sets of c and f, and test over 10000 models to get an accurate distribution.
+        We try this with 3 sets of c and f, and test over 1000 models to get an accurate distribution.
         """
-        factory = NNPrescriptorFactory(NNPrescriptor, {"in_size": 12, "hidden_size": 64, "out_size": 1})
+        factory = create_factory()
 
         for _ in range(3):
             c = np.random.rand()
             f = np.random.rand()
 
-            parent0 = factory.random_init()
-            parent1 = factory.random_init()
-            init_uniform(parent0.model, c)
-            init_uniform(parent1.model, c)
-
-            # Make sure parents are initialized correctly to all c
-            for parameter in parent0.model.parameters():
-                self.assertTrue(torch.all(parameter.data == c))
-            for parameter in parent1.model.parameters():
-                self.assertTrue(torch.all(parameter.data == c))
-
             params = []
             n = 10000
             for _ in range(n):
-                child = factory.crossover([parent0, parent1], 1, f)[0]
-                for parameter in child.model.parameters():
+                candidate = factory.random_init()
+                init_uniform(candidate.model, c)
+
+                # Make sure candidate is initialized correctly to all c
+                for parameter in candidate.model.parameters():
+                    self.assertTrue(torch.all(parameter.data == c))
+
+                factory.mutation(candidate, 1, f)
+                for parameter in candidate.model.parameters():
                     params.append(parameter)
 
             flattened = torch.cat([p.flatten() for p in params])
@@ -160,16 +182,23 @@ class TestNNMutation(unittest.TestCase):
         Checks the count of mutated parameters is correct.
         We should have mutation_factor mutated parameters.
         """
-        factory = NNPrescriptorFactory(NNPrescriptor, {"in_size": 12, "hidden_size": 100000, "out_size": 1})
-        parent0 = factory.random_init()
-        parent1 = factory.random_init()
-        init_uniform(parent0.model, 1)
-        init_uniform(parent1.model, 1)
+        factory = create_factory()
 
-        child = factory.crossover([parent0, parent1], 0.1, 0.1)[0]
         diff_weight_count = 0
         param_count = 0
-        for parameter in child.model.parameters():
-            diff_weight_count += torch.sum(parameter.data != 1).item()
-            param_count += parameter.numel()
+
+        n = 10
+        for _ in range(n):
+            # Uniformly initialize candidate
+            candidate = factory.random_init()
+            init_uniform(candidate.model, 1)
+
+            # Mutate candidate
+            factory.mutation(candidate, 0.1, 0.1)
+
+            # Count mutated parameters
+            for parameter in candidate.model.parameters():
+                diff_weight_count += torch.sum(parameter.data != 1).item()
+                param_count += parameter.numel()
+
         self.assertAlmostEqual(diff_weight_count / param_count, 0.1, places=3)
