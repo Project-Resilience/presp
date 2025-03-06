@@ -24,9 +24,6 @@ class IdPrescriptor(Prescriptor):
     def forward(self, _):
         return ""
 
-    def save(self, path):
-        pass
-
 
 class IdEvaluator(Evaluator):
     """

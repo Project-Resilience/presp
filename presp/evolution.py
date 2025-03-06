@@ -35,7 +35,7 @@ class Evolution:
         :param n_generations: The number of generations to run evolution for. Generations start counting at 1.
         :param population_size: The size of the total population including elites.
         :param remove_population_pct: The bottom percentage of the population to not use as parents.
-        :param n_elites: The number of elites to keep from the previous generation. When this is set to 0, all 
+        :param n_elites: The number of elites to keep from the previous generation. When this is set to 0, all
         candidates are considered elite.
         :param mutation_rate: The rate at which to mutate each parameter.
         :param mutation_factor: The factor by which to mutate each parameter.

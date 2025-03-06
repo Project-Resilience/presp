@@ -33,6 +33,8 @@ class NNPrescriptor(Prescriptor):
             else:
                 raise ValueError(f"Unknown layer type: {layer_type}")
 
+        # Get our model params back after we destroy them building the model
+        self.model_params = [{**layer} for layer in model_params]
         self.model = torch.nn.Sequential(*layers)
         self.model.to(device)
 
