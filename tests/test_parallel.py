@@ -10,7 +10,7 @@ from presp.evaluator import Evaluator
 from presp.prescriptor import Prescriptor
 from presp.prescriptor.nn import NNPrescriptorFactory
 
-from examples.cartpole.direct_evaluator import CartPoleEvaluator
+from examples.cartpole.direct_evaluator import DirectEvaluator
 
 
 class IdPrescriptor(Prescriptor):
@@ -103,10 +103,10 @@ class TestParallelization(unittest.TestCase):
         factory = NNPrescriptorFactory(**config["prescriptor_params"])
         population = [factory.random_init() for _ in range(100)]
 
-        sequential_evaluator = CartPoleEvaluator(n_jobs=1, n_envs=10)
+        sequential_evaluator = DirectEvaluator(n_jobs=1, n_envs=10)
         sequential_results = sequential_evaluator.evaluate_subset(population)
 
-        parallel_evaluator = CartPoleEvaluator(n_jobs=4, n_envs=10)
+        parallel_evaluator = DirectEvaluator(n_jobs=4, n_envs=10)
         parallel_results = parallel_evaluator.evaluate_subset(population)
 
         for sequential, parallel in zip(sequential_results, parallel_results):

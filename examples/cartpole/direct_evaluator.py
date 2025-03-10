@@ -9,7 +9,7 @@ from presp.evaluator import Evaluator
 from presp.prescriptor import NNPrescriptor
 
 
-class CartPoleEvaluator(Evaluator):
+class DirectEvaluator(Evaluator):
     """
     Evaluator implementation for the CartPole gymnasium environment.
     We perform direct evolution so we do not implement update_predictor.
