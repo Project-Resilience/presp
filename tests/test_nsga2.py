@@ -129,3 +129,25 @@ class TestNonDominatedSort(unittest.TestCase):
             for presc in front:
                 self.assertEqual(presc.rank, i+1)
                 self.assertTrue(presc.cand_id.startswith(str(i+1)))
+
+    def test_fast_nondominated_sort_more(self):
+        """
+        Tests a case with ChatGPT generated objective values and fronts.
+        """
+        true_ranks = [1, 1, 1, 2, 3, 3, 3, 4, 4, 4]
+        obj1 = [0.15, 0.05, 0.02, 0.18, 0.83, 0.30, 0.43, 0.37, 0.73, 0.60]
+        obj2 = [0.15, 0.86, 0.96, 0.18, 0.21, 0.52, 0.29, 0.95, 0.59, 0.70]
+
+        shuffled_idxs = [2, 1, 9, 3, 6, 0, 7, 8, 5, 4]
+
+        population = [DummyPrescriptor() for _ in range(10)]
+        for i, cand in enumerate(population):
+            cand.cand_id = f"1_{i}"
+            idx = shuffled_idxs[i]
+            cand.metrics = np.array([obj1[idx], obj2[idx]])
+
+        _ = fast_non_dominated_sort(population)
+        for i, cand in enumerate(population):
+            idx = shuffled_idxs[i]
+            true_rank = true_ranks[idx]
+            self.assertEqual(cand.rank, true_rank)

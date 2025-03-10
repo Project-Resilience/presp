@@ -7,46 +7,50 @@ from presp.prescriptor import Prescriptor
 # pylint: disable=invalid-name
 def fast_non_dominated_sort(population: list[Prescriptor]) -> list[list[Prescriptor]]:
     """
-    Fast non-dominated sort algorithm from ChatGPT.
+    Fast non-dominated sort algorithm.
     Sets rank of candidates in-place.
     :param population: The population to sort.
     :return: A list of fronts.
     """
     population_size = len(population)
-    S = [[] for _ in range(population_size)]
-    front = [[]]
-    n = [0 for _ in range(population_size)]
-    rank = [0 for _ in range(population_size)]
+    S = [[] for _ in range(population_size)]    # Set of solutions dominated by p
+    n = [0 for _ in range(population_size)]     # Number of solutions dominating p
+    front = [[]]                                # Final Pareto fronts
+    rank = [0 for _ in range(population_size)]  # Rank of solution
 
     for p in range(population_size):
         S[p] = []
         n[p] = 0
         for q in range(population_size):
+            # If p dominates q
             if dominates(population[p], population[q]):
-                if q not in S[p]:
-                    S[p].append(q)
+                # Add q to the set of solutions dominated by p
+                S[p].append(q)
             elif dominates(population[q], population[p]):
+                # Increment the domination counter of p
                 n[p] = n[p] + 1
+        # p belongs to the first front
         if n[p] == 0:
             rank[p] = 0
-            if p not in front[0]:
-                front[0].append(p)
+            front[0].append(p)
 
+    # Initialize the front counter
     i = 0
     while front[i]:
+        # Used to store the members of the next front
         Q = []
         for p in front[i]:
             for q in S[p]:
                 n[q] = n[q] - 1
+                # q belongs to the next front
                 if n[q] == 0:
                     rank[q] = i+1
-                    if q not in Q:
-                        Q.append(q)
+                    Q.append(q)
         i = i+1
         front.append(Q)
 
     # With this implementation the final front will be empty
-    del front[len(front)-1]
+    front.pop()
 
     # Convert front indices to population
     candidate_fronts = []
@@ -75,14 +79,20 @@ def calculate_crowding_distance(front: list[Prescriptor]):
     for candidate in front:
         candidate.distance = 0
     for m in range(n_objectives):
+        # Sort by the mth objective
         sorted_front = sorted(front, key=lambda candidate: candidate.metrics[m])
+
         obj_min = sorted_front[0].metrics[m]
         obj_max = sorted_front[-1].metrics[m]
+
+        # Edges have infinite distance
         sorted_front[0].distance = float('inf')
         sorted_front[-1].distance = float('inf')
+        # If all candidates have the same value, they have a distance of 0 so we can skip this process
         if obj_max != obj_min:
             for i in range(1, len(sorted_front) - 1):
                 dist = sorted_front[i+1].metrics[m] - sorted_front[i-1].metrics[m]
+                # Normalize distance by objective range
                 sorted_front[i].distance += dist / (obj_max - obj_min)
 
 
