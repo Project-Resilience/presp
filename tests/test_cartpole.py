@@ -7,8 +7,11 @@ from pathlib import Path
 import shutil
 import unittest
 
+import numpy as np
+import torch
 import yaml
 
+from examples.cartpole.cartpole_prescriptor import CartPolePrescriptor
 from examples.cartpole.direct_evaluator import CartPoleEvaluator
 from presp.prescriptor.nn import NNPrescriptorFactory
 from presp.evolution import Evolution
@@ -19,6 +22,8 @@ class TestCartPole(unittest.TestCase):
     Tests the cartpole example by running it all the way through and checking the results.
     """
     def setUp(self):
+        np.random.seed(42)
+        torch.manual_seed(42)
         if Path("temp").exists():
             shutil.rmtree(Path("temp"))
 
@@ -29,7 +34,7 @@ class TestCartPole(unittest.TestCase):
         with open("examples/cartpole/config.yml", "r", encoding="utf-8") as f:
             config = yaml.safe_load(f)
 
-        factory = NNPrescriptorFactory(**config["prescriptor_params"])
+        factory = NNPrescriptorFactory(CartPolePrescriptor, **config["prescriptor_params"])
         evaluator = CartPoleEvaluator(**config["eval_params"])
 
         evolution = Evolution(prescriptor_factory=factory, evaluator=evaluator, **config["evolution_params"])

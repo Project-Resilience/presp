@@ -14,6 +14,11 @@ class NNPrescriptor(Prescriptor):
     Simple neural network implementation of a prescriptor.
     """
     def __init__(self, model_params: list[dict], device: str = "cpu"):
+        """
+        :param model_params: The parameters to construct the torch model with. A list of layers with their type and
+        parameters. See below for how to use this.
+        :param device: The torch device to load the model on to.
+        """
         super().__init__()
         self.model_params = [{**layer} for layer in model_params]
         self.device = device
@@ -51,7 +56,15 @@ class NNPrescriptorFactory(PrescriptorFactory):
     """
     Factory to construct NNPrescriptors.
     """
-    def __init__(self, model_params: dict[str, int], device: str = "cpu"):
+    def __init__(self, prescriptor_cls: type[NNPrescriptor], model_params: dict[str, int], device: str = "cpu"):
+        """
+        :param prescriptor_cls: The class of the prescriptor to create. There can be a many:1 mapping between
+        NNPrescriptor implementations and NNPrescriptorFactory so we can use the same factory for different
+        prescriptors meaning we should take in their CLS here.
+        :param model_params: The parameters to construct the NNPrescriptors with.
+        :param device: What torch.device to load the models on to by default.
+        """
+        self.prescriptor_cls = prescriptor_cls
         self.model_params = model_params
         self.device = device
 
@@ -61,7 +74,7 @@ class NNPrescriptorFactory(PrescriptorFactory):
         We orthogonally init all the linear layers except the last one which is standard normally initialized.
         Fill the biases with the standard normal distribution as well.
         """
-        candidate = NNPrescriptor(self.model_params, self.device)
+        candidate = self.prescriptor_cls(self.model_params, self.device)
         linear_layers = [layer for layer in candidate.model if isinstance(layer, torch.nn.Linear)]
         for i, layer in enumerate(linear_layers):
             if isinstance(layer, torch.nn.Linear):
@@ -79,7 +92,7 @@ class NNPrescriptorFactory(PrescriptorFactory):
         Take a random 50/50 choice of either parent's weights.
         NOTE: The child is returned in a list to fit the abstract crossover method.
         """
-        child = NNPrescriptor(self.model_params, self.device)
+        child = self.prescriptor_cls(self.model_params, self.device)
         parent1, parent2 = parents[0], parents[1]
         child.model = copy.deepcopy(parent1.model)
         for child_param, parent2_param in zip(child.model.parameters(), parent2.model.parameters()):
@@ -107,10 +120,10 @@ class NNPrescriptorFactory(PrescriptorFactory):
         """
         torch.save(candidate.model.state_dict(), path)
 
-    def load(self, path: Path) -> Prescriptor:
+    def load(self, path: Path) -> NNPrescriptor:
         """
         Loads torch model from file.
         """
-        candidate = NNPrescriptor(self.model_params, device=self.device)
+        candidate = self.prescriptor_cls(self.model_params, device=self.device)
         candidate.model.load_state_dict(torch.load(path, map_location=self.device, weights_only=True))
         return candidate

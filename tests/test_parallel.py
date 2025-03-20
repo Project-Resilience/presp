@@ -4,12 +4,14 @@ Unit tests to see if parallel evaluation is working correctly.
 import unittest
 
 import numpy as np
+import torch
 import yaml
 
 from presp.evaluator import Evaluator
 from presp.prescriptor import Prescriptor
 from presp.prescriptor.nn import NNPrescriptorFactory
 
+from examples.cartpole.cartpole_prescriptor import CartPolePrescriptor
 from examples.cartpole.direct_evaluator import CartPoleEvaluator
 
 
@@ -43,6 +45,10 @@ class TestParallelization(unittest.TestCase):
     """
     Tests parallelization of evaluation.
     """
+    def setUp(self):
+        np.random.seed(42)
+        torch.manual_seed(42)
+
     def test_results_correct_order(self):
         """
         Tests to make sure results are in the correct order after parallel evaluation.
@@ -100,7 +106,7 @@ class TestParallelization(unittest.TestCase):
         with open("examples/cartpole/config.yml", "r", encoding="utf-8") as f:
             config = yaml.safe_load(f)
 
-        factory = NNPrescriptorFactory(**config["prescriptor_params"])
+        factory = NNPrescriptorFactory(CartPolePrescriptor, **config["prescriptor_params"])
         population = [factory.random_init() for _ in range(100)]
 
         sequential_evaluator = CartPoleEvaluator(n_jobs=1, n_envs=10)
