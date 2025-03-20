@@ -2,8 +2,8 @@
 Class responsible for running the overall evolutionary process.
 """
 from pathlib import Path
-import random
 
+import numpy as np
 import pandas as pd
 from tqdm import tqdm
 
@@ -99,8 +99,8 @@ class Evolution:
         :param sorted_population: The population of prescriptors sorted by rank and distance.
         :return: A tuple of two parents to be used for crossover.
         """
-        idx1 = min(random.choices(range(len(sorted_population)), k=2))
-        idx2 = min(random.choices(range(len(sorted_population)), k=2))
+        idx1 = np.min(np.random.randint(0, len(sorted_population), size=2))
+        idx2 = np.min(np.random.randint(0, len(sorted_population), size=2))
         return [sorted_population[idx1], sorted_population[idx2]]
 
     def create_pop(self, population: list[Prescriptor], remove_population_pct: float = 0) -> list[Prescriptor]:

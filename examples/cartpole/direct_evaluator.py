@@ -3,7 +3,6 @@ Evaluator for the CartPole gymnasium environment.
 """
 import gymnasium
 import numpy as np
-import torch
 
 from presp.evaluator import Evaluator
 from presp.prescriptor import NNPrescriptor
@@ -29,10 +28,8 @@ class CartPoleEvaluator(Evaluator):
             obs, _ = env.reset(seed=i)
             episode_over = False
             while not episode_over:
-                obs = torch.tensor(obs, dtype=torch.float32, device=candidate.device)
-                prob = candidate.forward(obs)
-                action = (prob > 0.5).int()
-                obs, reward, done, truncated, _ = env.step(action.item())
+                action = candidate.forward(obs)
+                obs, reward, done, truncated, _ = env.step(action)
                 episode_over = done or truncated
                 total_reward += reward
             env.close()

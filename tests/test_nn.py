@@ -8,7 +8,7 @@ import unittest
 import numpy as np
 import torch
 
-from presp.prescriptor import NNPrescriptorFactory
+from presp.prescriptor import NNPrescriptor, NNPrescriptorFactory
 
 
 def init_uniform(model, c):
@@ -50,7 +50,7 @@ def create_factory() -> NNPrescriptorFactory:
             {"type": "sigmoid"}
         ]
     }
-    return NNPrescriptorFactory(**factory_params)
+    return NNPrescriptorFactory(NNPrescriptor, **factory_params)
 
 
 class TestNNInit(unittest.TestCase):
