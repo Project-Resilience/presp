@@ -56,7 +56,11 @@ class NNPrescriptorFactory(PrescriptorFactory):
     """
     Factory to construct NNPrescriptors.
     """
-    def __init__(self, prescriptor_cls: type[NNPrescriptor], model_params: dict[str, int], device: str = "cpu"):
+    def __init__(self,
+                 prescriptor_cls: type[NNPrescriptor],
+                 model_params: list[dict],
+                 device: str = "cpu",
+                 **kw_params):
         """
         :param prescriptor_cls: The class of the prescriptor to create. There can be a many:1 mapping between
         NNPrescriptor implementations and NNPrescriptorFactory so we can use the same factory for different
@@ -67,6 +71,7 @@ class NNPrescriptorFactory(PrescriptorFactory):
         self.prescriptor_cls = prescriptor_cls
         self.model_params = model_params
         self.device = device
+        self.kw_params = kw_params
 
     def random_init(self) -> NNPrescriptor:
         """
@@ -74,7 +79,7 @@ class NNPrescriptorFactory(PrescriptorFactory):
         We orthogonally init all the linear layers except the last one which is standard normally initialized.
         Fill the biases with the standard normal distribution as well.
         """
-        candidate = self.prescriptor_cls(self.model_params, self.device)
+        candidate = self.prescriptor_cls(self.model_params, self.device, **self.kw_params)
         linear_layers = [layer for layer in candidate.model if isinstance(layer, torch.nn.Linear)]
         for i, layer in enumerate(linear_layers):
             if isinstance(layer, torch.nn.Linear):
@@ -92,7 +97,7 @@ class NNPrescriptorFactory(PrescriptorFactory):
         Take a random 50/50 choice of either parent's weights.
         NOTE: The child is returned in a list to fit the abstract crossover method.
         """
-        child = self.prescriptor_cls(self.model_params, self.device)
+        child = self.prescriptor_cls(self.model_params, self.device, **self.kw_params)
         parent1, parent2 = parents[0], parents[1]
         child.model = copy.deepcopy(parent1.model)
         for child_param, parent2_param in zip(child.model.parameters(), parent2.model.parameters()):
@@ -124,6 +129,6 @@ class NNPrescriptorFactory(PrescriptorFactory):
         """
         Loads torch model from file.
         """
-        candidate = self.prescriptor_cls(self.model_params, device=self.device)
+        candidate = self.prescriptor_cls(self.model_params, device=self.device, **self.kw_params)
         candidate.model.load_state_dict(torch.load(path, map_location=self.device, weights_only=True))
         return candidate
