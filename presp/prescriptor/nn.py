@@ -80,7 +80,12 @@ class NNPrescriptorFactory(PrescriptorFactory):
         We orthogonally init all the linear layers except the last one which is standard normally initialized.
         Fill the biases with the standard normal distribution as well.
         """
-        candidate = self.prescriptor_cls(self.model_params, self.device, **self.kw_params)
+        candidate = self.prescriptor_cls(model_params=self.model_params, device=self.device, **self.kw_params)
+
+        # NOTE: We need to move the model to CPU to init the weights, otherwise we get an error on MPS
+        if candidate.device == "mps":
+            candidate.model = candidate.model.to("cpu")
+
         linear_layers = [layer for layer in candidate.model if isinstance(layer, torch.nn.Linear)]
         for i, layer in enumerate(linear_layers):
             if isinstance(layer, torch.nn.Linear):
@@ -90,6 +95,10 @@ class NNPrescriptorFactory(PrescriptorFactory):
                     torch.nn.init.normal_(layer.weight, 0, 1)
                 layer.bias.data.fill_(torch.normal(0, 1, size=(1,)).item())
 
+        # Return the weights back to the original device
+        if candidate.device == "mps":
+            candidate.model = candidate.model.to(candidate.device)
+
         return candidate
 
     def crossover(self, parents: list[NNPrescriptor]) -> list[NNPrescriptor]:
@@ -98,7 +107,7 @@ class NNPrescriptorFactory(PrescriptorFactory):
         Take a random 50/50 choice of either parent's weights.
         NOTE: The child is returned in a list to fit the abstract crossover method.
         """
-        child = self.prescriptor_cls(self.model_params, self.device, **self.kw_params)
+        child = self.prescriptor_cls(model_params=self.model_params, device=self.device, **self.kw_params)
         parent1, parent2 = parents[0], parents[1]
         child.model = copy.deepcopy(parent1.model)
         for child_param, parent2_param in zip(child.model.parameters(), parent2.model.parameters()):
@@ -130,6 +139,6 @@ class NNPrescriptorFactory(PrescriptorFactory):
         """
         Loads torch model from file.
         """
-        candidate = self.prescriptor_cls(self.model_params, device=self.device, **self.kw_params)
+        candidate = self.prescriptor_cls(model_params=self.model_params, device=self.device, **self.kw_params)
         candidate.model.load_state_dict(torch.load(path, map_location=self.device, weights_only=True))
         return candidate
