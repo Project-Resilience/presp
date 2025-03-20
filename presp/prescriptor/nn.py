@@ -67,6 +67,7 @@ class NNPrescriptorFactory(PrescriptorFactory):
         prescriptors meaning we should take in their CLS here.
         :param model_params: The parameters to construct the NNPrescriptors with.
         :param device: What torch.device to load the models on to by default.
+        :param kw_params: Any other parameters to pass to the prescriptor.
         """
         self.prescriptor_cls = prescriptor_cls
         self.model_params = model_params
