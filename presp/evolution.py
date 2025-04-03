@@ -72,10 +72,13 @@ class Evolution:
         """
         self.population = []
         if self.seed_dir is not None:
+            print(f"Loading seeds from {self.seed_dir}")
             for seed_file in self.seed_dir.glob("*"):
                 candidate = self.prescriptor_factory.load(seed_file)
                 candidate.cand_id = seed_file.stem
                 self.population.append(candidate)
+
+        print(f"Loaded {len(self.population)} candidates from seed dir.")
 
         for i in range(len(self.population), self.population_size):
             candidate = self.prescriptor_factory.random_init()
