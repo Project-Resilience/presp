@@ -99,13 +99,21 @@ def calculate_crowding_distance(front: list[Prescriptor]):
 def dominates(candidate1: Prescriptor, candidate2: Prescriptor) -> bool:
     """
     Determine if one individual dominates another.
-    One individual dominates another if it's doing better in at least one objective
-    and better than or equal to in all the rest.
+    First we check feasibility dominance by counting constraint violations.
+    One individual dominates another if it's doing better in at least one objective and better than or equal to in all
+    the rest.
     metrics are always minimized: lower is better.
     :param candidate1: First candidate in comparison.
     :param candidate2: Second candidate in comparison.
     :return: Whether candidate 1 dominates candidate 2.
     """
+    # Domination begins with constraint violation
+    if candidate1.cv < candidate2.cv:
+        return True
+    elif candidate1.cv > candidate2.cv:
+        return False
+
+    # If both candidates are feasible or have the same constraint violation, we compare metrics
     better = False
     for obj1, obj2 in zip(candidate1.metrics, candidate2.metrics):
         if obj1 > obj2:
