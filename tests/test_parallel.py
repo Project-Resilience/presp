@@ -38,7 +38,7 @@ class IdEvaluator(Evaluator):
         pass
 
     def evaluate_candidate(self, candidate: Prescriptor):
-        return np.array([int(candidate.cand_id.split("_")[1])])
+        return np.array([int(candidate.cand_id.split("_")[1])]), 0
 
 
 class TestParallelization(unittest.TestCase):
@@ -116,4 +116,4 @@ class TestParallelization(unittest.TestCase):
         parallel_results = parallel_evaluator.evaluate_subset(population)
 
         for sequential, parallel in zip(sequential_results, parallel_results):
-            self.assertTrue(np.equal(sequential, parallel))
+            self.assertTrue(np.equal(sequential[0], parallel[0]))

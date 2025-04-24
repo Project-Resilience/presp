@@ -46,7 +46,7 @@ class TestCartPole(unittest.TestCase):
             # Checks the results file is 101x5
             self.assertEqual(len(rows), 101)
             for row in rows:
-                self.assertEqual(len(row), 5)
+                self.assertEqual(len(row), 6)
 
             # Checks that the first candidate in the file has rank 1, inf distance, and the highest score possible
             self.assertEqual(rows[1][2], "1")
