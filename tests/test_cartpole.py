@@ -8,6 +8,7 @@ import shutil
 import unittest
 
 import numpy as np
+import pandas as pd
 import torch
 import yaml
 
@@ -40,18 +41,22 @@ class TestCartPole(unittest.TestCase):
         evolution = Evolution(prescriptor_factory=factory, evaluator=evaluator, **config["evolution_params"])
         evolution.run_evolution()
 
-        with open("tests/temp/10.csv", "r", encoding="utf-8") as csvfile:
-            rows = list(csv.reader(csvfile, delimiter=','))
+        results_df = pd.read_csv("tests/temp/10.csv")
 
-            # Checks the results file is 101x5
-            self.assertEqual(len(rows), 101)
-            for row in rows:
-                self.assertEqual(len(row), 6)
+        # Makes sure we have the correct number of rows and columns
+        self.assertEqual(results_df.shape, (100, 6))
 
-            # Checks that the first candidate in the file has rank 1, inf distance, and the highest score possible
-            self.assertEqual(rows[1][2], "1")
-            self.assertEqual(rows[1][3], "inf")
-            self.assertEqual(rows[1][4], "-500.0")
+        # There are no constraints so the cv column should be all 0s
+        self.assertFalse(results_df["cv"].any())
+
+        # Our top candidate should have a rank of 1
+        self.assertEqual(results_df["rank"].iloc[0], 1)
+
+        # The distance of the top candidate should be infinity
+        self.assertEqual(results_df["distance"].iloc[0], float("inf"))
+
+        # Check that we have the best possible score after evolution
+        self.assertEqual(results_df["score"].iloc[0], -500)
 
     def tearDown(self):
         if Path("temp").exists():
