@@ -2,7 +2,6 @@
 Very simple unit test for the cartpole example to ensure it fully runs evolution as expected.
 This also serves as an end-to-end test to see that evolution can be run without error.
 """
-import csv
 from pathlib import Path
 import shutil
 import unittest

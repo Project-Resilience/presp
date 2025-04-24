@@ -1,3 +1,6 @@
+"""
+Example showing how to implement a custom evaluator that must satisfy constraints using the Evaluator abstract class.
+"""
 import numpy as np
 
 from presp.evaluator import Evaluator
@@ -5,13 +8,17 @@ from presp.prescriptor import DirectPrescriptor
 
 
 class BNHEvaluator(Evaluator):
-
+    """
+    Evaluator implementation of the BNH problem. Minimizes 2 objectives f1 and f2 and has 4 constraints although
+    we split them into 6 for ease of implementation.
+    """
     def __init__(self):
         super().__init__(["f1", "f2"], n_jobs=1)
 
     def update_predictor(self, _):
         pass
 
+    # pylint:disable=missing-function-docstring
     def f1(self, x1: float, x2: float) -> float:
         return 4 * x1 ** 2 + 4 * x2 ** 2
 
@@ -35,6 +42,7 @@ class BNHEvaluator(Evaluator):
 
     def c6(self, x2: float):
         return -1 * x2
+    # pylint:enable=missing-function-docstring
 
     def evaluate_candidate(self, candidate: DirectPrescriptor):
         x1 = candidate.genome[0]

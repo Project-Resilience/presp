@@ -5,7 +5,7 @@ from pathlib import Path
 
 import numpy as np
 
-from presp.prescriptor import Prescriptor, PrescriptorFactory
+from presp.prescriptor.base import Prescriptor, PrescriptorFactory
 
 
 class DirectPrescriptor(Prescriptor):

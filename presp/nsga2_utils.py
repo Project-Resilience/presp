@@ -110,7 +110,7 @@ def dominates(candidate1: Prescriptor, candidate2: Prescriptor) -> bool:
     # Domination begins with constraint violation
     if candidate1.cv < candidate2.cv:
         return True
-    elif candidate1.cv > candidate2.cv:
+    if candidate1.cv > candidate2.cv:
         return False
 
     # If both candidates are feasible or have the same constraint violation, we compare metrics
