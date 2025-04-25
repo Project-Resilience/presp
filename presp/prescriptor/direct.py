@@ -66,8 +66,10 @@ class DirectFactory(PrescriptorFactory):
         genome[mutate_mask] *= (1 + noise)
 
         # Mirror genome back into bounds.
-        genome = np.where(genome < self.xl, 2*self.xl-genome, genome)
-        genome = np.where(genome > self.xu, 2*self.xu-genome, genome)
+        # NOTE: If we reverse the genome back into bounds but the magnitude of the reversal goes out of bounds again,
+        # we just clamp it to the bounds. This may not necessarily be realistic but we cover the possibility.
+        genome = np.where(genome < self.xl, np.minimum(2*self.xl-genome, self.xu), genome)
+        genome = np.where(genome > self.xu, np.maximum(2*self.xu-genome, self.xl), genome)
 
         # Is this necessary?
         candidate.genome = genome
