@@ -31,6 +31,8 @@ class NNPrescriptor(Prescriptor):
                 layers.append(torch.nn.Linear(**layer))
             elif layer_type == "tanh":
                 layers.append(torch.nn.Tanh(**layer))
+            elif layer_type == "relu":
+                layers.append(torch.nn.ReLU(**layer))
             elif layer_type == "sigmoid":
                 layers.append(torch.nn.Sigmoid(**layer))
             elif layer_type == "softmax":
