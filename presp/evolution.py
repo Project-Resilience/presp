@@ -135,7 +135,7 @@ class Evolution:
 
     def sort_pop(self, population: list[Prescriptor]) -> list[Prescriptor]:
         """
-        Sorts the population by rank and distance according to NSGA-II.
+        Sort by rank and distance according to NSGA-II.
         :param population: The population to sort.
         :return: The sorted population.
         """
@@ -161,6 +161,7 @@ class Evolution:
             row = {
                 "cand_id": candidate.cand_id,
                 "parents": candidate.parents,
+                "cv": candidate.cv,
                 "rank": candidate.rank,
                 "distance": candidate.distance
             }

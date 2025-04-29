@@ -13,6 +13,7 @@ class Prescriptor(ABC):
         self.cand_id = ""
         self.parents = None
         self.metrics = None
+        self.cv = 0
         self.outcomes = None
         self.rank = None
         self.distance = None

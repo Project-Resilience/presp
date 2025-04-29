@@ -33,4 +33,4 @@ class CartPoleEvaluator(Evaluator):
                 episode_over = done or truncated
                 total_reward += reward
             env.close()
-        return np.array([-1 * total_reward / self.n_envs])
+        return np.array([-1 * total_reward / self.n_envs]), 0

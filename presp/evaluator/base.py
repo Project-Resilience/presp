@@ -35,14 +35,16 @@ class Evaluator(ABC):
         Evaluates an entire population of prescriptors.
         Doesn't evaluate prescriptors that already have metrics unless force is True.
         Sets candidates' metrics and outcomes for evolution.
+        Additionally, sets the cv attribute to the sum of the constraint violations.
         :param population: The population of prescriptors to evaluate.
         :param force: Whether to force evaluation of all prescriptors.
         :param verbose: Whether to show a progress bar for sequential evaluation.
         """
         pop_subset = [cand for cand in population if (cand.metrics is None) or force]
         pop_results = self.evaluate_subset(pop_subset, verbose=verbose)
-        for candidate, metrics in zip(pop_subset, pop_results):
+        for candidate, (metrics, cv) in zip(pop_subset, pop_results):
             candidate.metrics = metrics
+            candidate.cv = cv
             candidate.outcomes = self.outcomes
 
     def evaluate_subset(self, population: list[Prescriptor], verbose=1) -> list[np.ndarray]:
@@ -84,9 +86,9 @@ class Evaluator(ABC):
         return parallel_results
 
     @abstractmethod
-    def evaluate_candidate(self, candidate: Prescriptor) -> np.ndarray:
+    def evaluate_candidate(self, candidate: Prescriptor) -> tuple[np.ndarray, float]:
         """
         Evaluates a single candidate prescriptor.
         :param candidate: The candidate prescriptor to evaluate.
-        :return: The metrics of the candidate.
+        :return: The metrics of the candidate and the constraint violations.
         """
