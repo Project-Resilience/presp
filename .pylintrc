@@ -42,7 +42,8 @@ suggestion-mode=yes
 disable=
 
 # Default set of "always good" names
-good-names=_,
+# (For scientific purposes)
+good-names=_,A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q,R,S,T,U,V,W,X,Y,Z
 
 recursive=y
 
