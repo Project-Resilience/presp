@@ -5,7 +5,7 @@ from presp.evaluator import Evaluator
 from presp.prescriptor import NNPrescriptor
 
 
-class ContextEvaluator(Evaluator):
+class CircleEvaluator(Evaluator):
     def __init__(self, device: str = "cpu", n_jobs: int = 1):
         super().__init__(["f1", "f2"], n_jobs=n_jobs)
         self.device = device

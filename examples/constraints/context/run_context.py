@@ -8,7 +8,8 @@ import yaml
 
 from presp.evolution import Evolution
 from presp.prescriptor import DirectFactory, NNPrescriptorFactory, NNPrescriptor
-from examples.constraints.context.context_evaluator import ContextEvaluator
+from examples.constraints.context.circle_evaluator import CircleEvaluator
+from examples.constraints.context.triangle_evaluator import TriangleEvaluator
 from examples.constraints.context.direct_evaluator import DirectEvaluator
 
 
@@ -16,7 +17,13 @@ def run():
     with open("examples/constraints/context/config.yml", "r", encoding="utf-8") as f:
         config = yaml.safe_load(f)
 
-    evaluator = ContextEvaluator(**config["eval_params"])
+    if config["problem"] == "triangle":
+        evaluator = TriangleEvaluator(**config["eval_params"])
+    elif config["problem"] == "circle":
+        evaluator = CircleEvaluator(**config["eval_params"])
+    else:
+        raise ValueError("Problem not supported")
+
     factory = NNPrescriptorFactory(NNPrescriptor, **config["prescriptor_params"])
 
     save_path = Path(config["evolution_params"]["save_path"])

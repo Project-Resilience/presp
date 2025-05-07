@@ -5,7 +5,8 @@ import pandas as pd
 import torch
 import yaml
 
-from examples.constraints.context.context_evaluator import ContextEvaluator
+from examples.constraints.context.circle_evaluator import CircleEvaluator
+from examples.constraints.context.triangle_evaluator import TriangleEvaluator
 from presp.prescriptor import NNPrescriptor, NNPrescriptorFactory
 
 class Experimenter:
@@ -13,7 +14,12 @@ class Experimenter:
         with open(results_dir / "config.yml", "r", encoding="utf-8") as f:
             self.config = yaml.safe_load(f)
 
-        self.evaluator = ContextEvaluator(**self.config["eval_params"])
+        if self.config["problem"] == "triangle":
+            self.evaluator = TriangleEvaluator(**self.config["eval_params"])
+        elif self.config["problem"] == "circle":
+            self.evaluator = CircleEvaluator(**self.config["eval_params"])
+        else:
+            raise ValueError("Problem not supported")
         self.factory = NNPrescriptorFactory(NNPrescriptor, **self.config["prescriptor_params"])
         self.results_dir = results_dir
 
