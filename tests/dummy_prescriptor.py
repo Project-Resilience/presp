@@ -42,13 +42,8 @@ class DummyFactory(PrescriptorFactory):
         if np.random.rand() < mutation_rate:
             candidate.number += np.random.normal(0, mutation_factor)
 
-    def save(self, candidate: DummyPrescriptor, path: Path):
-        with open(path, "w", encoding="utf-8") as file:
-            file.write(str(candidate.number))
+    def save_population(self, population: list[DummyPrescriptor], path: Path):
+        pass
 
-    def load(self, path) -> DummyPrescriptor:
-        with open(path, "r", encoding="utf-8") as file:
-            number = float(file.read())
-        candidate = DummyPrescriptor()
-        candidate.number = number
-        return candidate
+    def load_population(self, path: Path) -> DummyPrescriptor:
+        pass

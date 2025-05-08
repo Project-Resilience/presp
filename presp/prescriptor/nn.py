@@ -131,16 +131,22 @@ class NNPrescriptorFactory(PrescriptorFactory):
                                      dtype=param.dtype)
                 param[mutate_mask] *= (1 + noise)
 
-    def save(self, candidate: NNPrescriptor, path: Path):
+    def save_population(self, population: list[NNPrescriptor], path: Path):
         """
-        Saves the torch model to file.
+        Put population into dict of cand_id -> NNPrescriptor and then save as a torch file.
         """
-        torch.save(candidate.model.state_dict(), path)
+        pop_dict = {cand.cand_id: cand.model.state_dict() for cand in population}
+        torch.save(pop_dict, path)
 
-    def load(self, path: Path) -> NNPrescriptor:
+    def load_population(self, path: Path) -> dict[str, NNPrescriptor]:
         """
-        Loads torch model from file.
+        Loads dict of torch weights from file and reconstructs the population into NNPrescriptors.
         """
-        candidate = self.prescriptor_cls(model_params=self.model_params, device=self.device, **self.kw_params)
-        candidate.model.load_state_dict(torch.load(path, map_location=self.device, weights_only=True))
-        return candidate
+        pop_dict = torch.load(path, map_location=self.device)
+        population = {}
+        for cand_id, model_state in pop_dict.items():
+            candidate = self.prescriptor_cls(model_params=self.model_params, device=self.device, **self.kw_params)
+            candidate.cand_id = cand_id
+            candidate.model.load_state_dict(model_state)
+            population[cand_id] = candidate
+        return population
