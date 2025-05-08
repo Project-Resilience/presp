@@ -38,6 +38,7 @@ class DirectFactory(PrescriptorFactory):
         Creates a randomly initialized vector of floats between xl and xu uniformly.
         """
         genome = np.random.rand(*self.xl.shape)
+        # genome = genome.astype(np.float64)
         genome = genome * (self.xu - self.xl) + self.xl
         candidate = DirectPrescriptor(self.xl, self.xu)
         candidate.genome = genome
@@ -74,15 +75,23 @@ class DirectFactory(PrescriptorFactory):
         # Is this necessary?
         candidate.genome = genome
 
-    def save(self, candidate: DirectPrescriptor, path: Path):
+    def save_population(self, population: list[DirectPrescriptor], path: Path):
+        pop_dict = {cand.cand_id: cand.genome for cand in population}
         with open(path, "wb") as f:
             # Save the genome as a tensor
-            np.save(f, candidate.genome)
+            np.savez(f, **pop_dict)
 
-    def load(self, path: Path) -> DirectPrescriptor:
+    def load_population(self, path: Path) -> dict[str, DirectPrescriptor]:
+        population = {}
         with open(path, "rb") as f:
-            # Load the genome from a tensor
-            genome = np.load(f)
-        candidate = DirectPrescriptor(self.xl, self.xu)
-        candidate.genome = genome
-        return candidate
+            # Load the population from the npz file
+            pop_file = np.load(f)
+            cand_ids = pop_file.files
+            pop_dict = {cand_id: pop_file[cand_id] for cand_id in cand_ids}
+            # Replace the genome with the full DirectPrescriptor object
+            for cand_id, genome in pop_dict.items():
+                candidate = DirectPrescriptor(self.xl, self.xu)
+                candidate.cand_id = cand_id
+                candidate.genome = genome
+                population[cand_id] = candidate
+        return population

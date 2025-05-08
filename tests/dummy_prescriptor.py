@@ -4,6 +4,7 @@ A dummy prescriptor and factory for use in unit testing.
 from pathlib import Path
 
 import numpy as np
+import pandas as pd
 
 from presp.prescriptor import Prescriptor, PrescriptorFactory
 
@@ -42,13 +43,18 @@ class DummyFactory(PrescriptorFactory):
         if np.random.rand() < mutation_rate:
             candidate.number += np.random.normal(0, mutation_factor)
 
-    def save(self, candidate: DummyPrescriptor, path: Path):
-        with open(path, "w", encoding="utf-8") as file:
-            file.write(str(candidate.number))
+    def save_population(self, population: list[DummyPrescriptor], path: Path):
+        cand_ids = [cand.cand_id for cand in population]
+        numbers = [cand.number for cand in population]
+        df = pd.DataFrame({"cand_id": cand_ids, "number": numbers})
+        df.to_csv(path, index=False)
 
-    def load(self, path) -> DummyPrescriptor:
-        with open(path, "r", encoding="utf-8") as file:
-            number = float(file.read())
-        candidate = DummyPrescriptor()
-        candidate.number = number
-        return candidate
+    def load_population(self, path: Path) -> dict[str, DummyPrescriptor]:
+        df = pd.read_csv(path)
+        pop_dict = {}
+        for _, row in df.iterrows():
+            cand = DummyPrescriptor()
+            cand.cand_id = row["cand_id"]
+            cand.number = row["number"]
+            pop_dict[cand.cand_id] = cand
+        return pop_dict

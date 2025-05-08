@@ -58,16 +58,16 @@ class PrescriptorFactory(ABC):
         """
 
     @abstractmethod
-    def save(self, candidate: Prescriptor, path: Path):
+    def save_population(self, population: list[Prescriptor], path: Path):
         """
-        Save the prescriptor to file.
-        :param prescriptor: The prescriptor to save.
-        :param path: The path to save the prescriptor to.
+        Saves a population of prescriptors to file.
+        :param population: The population of prescriptors to save.
+        :param path: The path to save the prescriptors to.
         """
 
     @abstractmethod
-    def load(self, path: Path) -> Prescriptor:
+    def load_population(self, path: Path) -> dict[str, Prescriptor]:
         """
-        Load a prescriptor from file.
-        :param path: The path to load the prescriptor from.
+        Load a population of prescriptors from file.
+        :param path: The path to load the prescriptors from.
         """

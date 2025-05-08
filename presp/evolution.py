@@ -27,7 +27,7 @@ class Evolution:
                  save_path: str,
                  prescriptor_factory: PrescriptorFactory,
                  evaluator: Evaluator,
-                 seed_dir: str = None,
+                 seed_path: str = None,
                  validator: Evaluator = None,
                  val_interval: int = 0,
                  save_all: bool = False):
@@ -42,12 +42,12 @@ class Evolution:
         :param save_path: The path to save the results to.
         :param prescriptor_factory: The factory to create prescriptors with.
         :param evaluator: The evaluator used to evaluate the prescriptors.
-        :param seed_dir: Optional path to a directory containing seed candidates.
+        :param seed_path: Optional path to a file holding seed candidates.
         :param validator: Optional evaluator class used to validate the population every val_interval steps.
         :param val_interval: The interval at which to validate the population.
         :param save_all: Whether to save all candidates or just rank 1 candidates.
         """
-
+        # Evolution parameters
         self.n_generations = n_generations
         self.population_size = population_size
         self.remove_population_pct = remove_population_pct
@@ -55,27 +55,52 @@ class Evolution:
         self.mutation_rate = mutation_rate
         self.mutation_factor = mutation_factor
         self.save_path = Path(save_path)
+        self.save_path.mkdir(parents=True, exist_ok=True)
         self.save_all = save_all
-        self.seed_dir = Path(seed_dir) if seed_dir is not None else None
+        self.seed_path = Path(seed_path) if seed_path is not None else None
         self.val_interval = val_interval
 
+        # Implemented classes
         self.prescriptor_factory = prescriptor_factory
         self.evaluator = evaluator
         self.validator = validator
 
+        # Population tracking
         self.population = []
         self.generation = 1
+
+        # Set up results dataframe
+        results_df = pd.DataFrame(columns=["gen",
+                                           "cand_id",
+                                           "parents",
+                                           "cv",
+                                           "rank",
+                                           "distance",
+                                           *self.evaluator.outcomes])
+        results_df.to_csv(self.save_path / "results.csv", index=False)
+        if self.validator:
+            val_df = pd.DataFrame(columns=["gen", "cand_id", *self.validator.outcomes])
+            val_df.to_csv(self.save_path / "validation.csv", index=False)
+        self.save_cache = []
 
     def create_initial_population(self):
         """
         Creates initial population from seed dir, randomly initializes the rest.
         """
         self.population = []
-        if self.seed_dir is not None:
-            print(f"Loading seeds from {self.seed_dir}")
-            for seed_file in self.seed_dir.glob("*"):
-                candidate = self.prescriptor_factory.load(seed_file)
-                candidate.cand_id = seed_file.stem
+        if self.seed_path is not None:
+            print(f"Loading seeds from {self.seed_path}")
+            seed_dict = self.prescriptor_factory.load_population(self.seed_path)
+
+            def sort_cand_id(cand_id):
+                return int(cand_id.split("_")[0]), int(cand_id.split("_")[1])
+            sorted_ids = sorted(seed_dict.keys(), key=sort_cand_id)
+
+            # We don't want duplicates cand_ids messing things up in our population
+            # We make the seeds generation 0 to show they are seeds
+            for i, cand_id in enumerate(sorted_ids):
+                candidate = seed_dict[cand_id]
+                candidate.cand_id = "0_" + str(i)
                 self.population.append(candidate)
 
         print(f"Loaded {len(self.population)} candidates from seed dir.")
@@ -149,16 +174,19 @@ class Evolution:
     def record_results(self):
         """
         Record results from population.
+        TODO: Currently this overwrites the population every generation. Maybe we can do something faster like save
+        by generation then merge at the end. Currently the save_all flag is dangerous because it will save
+        every candidate every generation O(P*G^2) where P is the population size and G is the number of generations.
         """
         rows = []
-        (self.save_path / str(self.generation)).mkdir(parents=True, exist_ok=True)
         for candidate in self.population:
             # Save to file if it's new. Only save rank 1 candidates if save_all is False.
             cand_gen = int(candidate.cand_id.split("_")[0])
             if (candidate.rank == 1 or self.save_all) and cand_gen == self.generation:
-                self.prescriptor_factory.save(candidate, (self.save_path / str(cand_gen) / f"{candidate.cand_id}"))
+                self.save_cache.append(candidate)
             # Record candidates' results
             row = {
+                "gen": self.generation,
                 "cand_id": candidate.cand_id,
                 "parents": candidate.parents,
                 "cv": candidate.cv,
@@ -169,26 +197,26 @@ class Evolution:
                 row[outcome] = metric
             rows.append(row)
 
-        df = pd.DataFrame(rows)
-        df.to_csv(self.save_path / f"{self.generation}.csv", index=False)
+        results_df = pd.DataFrame(rows)
+        results_df.to_csv(self.save_path / "results.csv", mode="a", index=False, header=False)
+
+        self.prescriptor_factory.save_population(self.save_cache, self.save_path / "population")
 
     def validate(self):
         """
         Validates the current population with a validator evaluator.
         """
         rows = []
-        (self.save_path / "validation").mkdir(parents=True, exist_ok=True)
-
         # Get validation results manually without setting cand's metrics or outcomes
         valid_results = self.validator.evaluate_subset(self.population, verbose=1)
 
         for candidate, val_metrics in zip(self.population, valid_results):
-            row = {"cand_id": candidate.cand_id}
+            row = {"gen": self.generation, "cand_id": candidate.cand_id}
             for outcome, metric in zip(self.validator.outcomes, val_metrics):
                 row[outcome] = metric
             rows.append(row)
-        df = pd.DataFrame(rows)
-        df.to_csv(self.save_path / "validation" / f"{self.generation}.csv", index=False)
+        results_df = pd.DataFrame(rows)
+        results_df.to_csv(self.save_path / "validation.csv", mode="a", index=False, header=False)
 
     def step(self):
         """
