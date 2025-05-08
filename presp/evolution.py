@@ -1,7 +1,6 @@
 """
 Class responsible for running the overall evolutionary process.
 """
-import time
 from pathlib import Path
 
 import numpy as np
@@ -28,7 +27,7 @@ class Evolution:
                  save_path: str,
                  prescriptor_factory: PrescriptorFactory,
                  evaluator: Evaluator,
-                 seed_dir: str = None,
+                 seed_path: str = None,
                  validator: Evaluator = None,
                  val_interval: int = 0,
                  save_all: bool = False):
@@ -43,7 +42,7 @@ class Evolution:
         :param save_path: The path to save the results to.
         :param prescriptor_factory: The factory to create prescriptors with.
         :param evaluator: The evaluator used to evaluate the prescriptors.
-        :param seed_dir: Optional path to a directory containing seed candidates.
+        :param seed_path: Optional path to a file holding seed candidates.
         :param validator: Optional evaluator class used to validate the population every val_interval steps.
         :param val_interval: The interval at which to validate the population.
         :param save_all: Whether to save all candidates or just rank 1 candidates.
@@ -58,7 +57,7 @@ class Evolution:
         self.save_path = Path(save_path)
         self.save_path.mkdir(parents=True, exist_ok=True)
         self.save_all = save_all
-        self.seed_dir = Path(seed_dir) if seed_dir is not None else None
+        self.seed_path = Path(seed_path) if seed_path is not None else None
         self.val_interval = val_interval
 
         # Implemented classes
@@ -89,11 +88,19 @@ class Evolution:
         Creates initial population from seed dir, randomly initializes the rest.
         """
         self.population = []
-        if self.seed_dir is not None:
-            print(f"Loading seeds from {self.seed_dir}")
-            for seed_file in self.seed_dir.glob("*"):
-                candidate = self.prescriptor_factory.load(seed_file)
-                candidate.cand_id = seed_file.stem
+        if self.seed_path is not None:
+            print(f"Loading seeds from {self.seed_path}")
+            seed_dict = self.prescriptor_factory.load_population(self.seed_path)
+
+            def sort_cand_id(cand_id):
+                return int(cand_id.split("_")[0]), int(cand_id.split("_")[1])
+            sorted_ids = sorted(seed_dict.keys(), key=sort_cand_id)
+
+            # We don't want duplicates cand_ids messing things up in our population
+            # We make the seeds generation 0 to show they are seeds
+            for i, cand_id in enumerate(sorted_ids):
+                candidate = seed_dict[cand_id]
+                candidate.cand_id = "0_" + str(i)
                 self.population.append(candidate)
 
         print(f"Loaded {len(self.population)} candidates from seed dir.")

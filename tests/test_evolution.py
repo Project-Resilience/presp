@@ -7,6 +7,7 @@ import shutil
 import unittest
 
 import numpy as np
+import pandas as pd
 
 from presp.evolution import Evolution
 from tests.dummy_evaluator import DummyEvaluator
@@ -21,14 +22,12 @@ class TestInitialPopulation(unittest.TestCase):
     def setUp(self):
         if Path("tests/temp").exists():
             shutil.rmtree(Path("tests/temp"))
-        if Path("tests/seeds").exists():
-            shutil.rmtree(Path("tests/seeds"))
+        Path("tests/seeds").unlink(missing_ok=True)
 
     def tearDown(self):
         if Path("tests/temp").exists():
             shutil.rmtree(Path("tests/temp"))
-        if Path("tests/seeds").exists():
-            shutil.rmtree(Path("tests/seeds"))
+        Path("tests/seeds").unlink(missing_ok=True)
 
     def test_create_initial_population_random(self):
         """
@@ -56,15 +55,17 @@ class TestInitialPopulation(unittest.TestCase):
         Also checks that the rest of the population is initialized randomly.
         """
         factory = DummyFactory()
-        seed_dir = Path("tests/seeds")
-        seed_dir.mkdir()
+        seed_path = Path("tests/seeds")
+        seeds = []
         for i in range(8):
             candidate = DummyPrescriptor()
+            candidate.cand_id = f"0_{i}"
             candidate.number = i
-            factory.save(candidate, seed_dir / f"0_{i}.txt")
+            seeds.append(candidate)
+        factory.save_population(seeds, seed_path)
 
         evaluator = DummyEvaluator()
-        evolution = Evolution(10, 10, 0.1, 2, 0.1, 0.1, "tests/temp", factory, evaluator, seed_dir="tests/seeds")
+        evolution = Evolution(10, 10, 0.1, 2, 0.1, 0.1, "tests/temp", factory, evaluator, seed_path="tests/seeds")
         evolution.create_initial_population()
 
         # Make sure population is the right size
@@ -191,3 +192,49 @@ class TestElites(unittest.TestCase):
                 else:
                     self.assertNotIn(candidate.cand_id, elite_ids)
                     self.assertEqual(candidate.cand_id.split("_")[0], str(i))
+
+
+class TestSaving(unittest.TestCase):
+    """
+    Tests the saving of the evolution class at each generation.
+    """
+    def setUp(self):
+        if Path("tests/temp").exists():
+            shutil.rmtree(Path("tests/temp"))
+        self.factory = DummyFactory()
+        evaluator = DummyEvaluator()
+        self.pop_size = 10
+        self.n_gens = 10
+        self.evolution = Evolution(self.n_gens, self.pop_size, 0.0, 2, 0.1, 0.1, "tests/temp", self.factory, evaluator)
+
+    def test_results_csv(self):
+        """
+        Makes sure we're saving the correct number of rows in the results csv.
+        """
+        for i in range(self.n_gens):
+            if i == 0:
+                self.evolution.create_initial_population()
+            else:
+                self.evolution.step()
+
+            results_df = pd.read_csv("tests/temp/results.csv")
+            self.assertEqual(len(results_df), self.pop_size * (i + 1))
+
+    def test_population_saving(self):
+        """
+        Makes sure we're saving the population correctly. We save only the pareto front and check that we aren't
+        saving duplicates (eg when 1_0 does well in gen 1 and gen 2, we only save it once).
+        """
+        pareto = set()
+        for i in range(self.n_gens):
+            if i == 0:
+                self.evolution.create_initial_population()
+            else:
+                self.evolution.step()
+
+            results_df = pd.read_csv("tests/temp/results.csv")
+            results_df = results_df[results_df["gen"] == i+1]
+            pareto_df = results_df[results_df["rank"] == 1]
+            pareto.update(pareto_df["cand_id"].to_list())
+            pop_dict = self.factory.load_population(Path("tests/temp/population"))
+            self.assertEqual(len(pop_dict), len(pareto))
