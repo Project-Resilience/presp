@@ -182,8 +182,10 @@ class Evolution:
         for candidate in self.population:
             # Save to file if it's new. Only save rank 1 candidates if save_all is False.
             cand_gen = int(candidate.cand_id.split("_")[0])
-            if (candidate.rank == 1 or self.save_all) and cand_gen == self.generation:
-                self.save_cache.append(candidate)
+            if candidate.rank == 1 or self.save_all:
+                # If the candidate is new (edge case for seeds in generation 0 which must be manually accounted for)
+                if cand_gen == self.generation or (cand_gen == 0 and self.generation == 1):
+                    self.save_cache.append(candidate)
             # Record candidates' results
             row = {
                 "gen": self.generation,

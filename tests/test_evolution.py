@@ -205,7 +205,32 @@ class TestSaving(unittest.TestCase):
         evaluator = DummyEvaluator()
         self.pop_size = 10
         self.n_gens = 10
-        self.evolution = Evolution(self.n_gens, self.pop_size, 0.0, 2, 0.1, 0.1, "tests/temp", self.factory, evaluator)
+
+        # Create some seeds too
+        seed_path = Path("tests/seeds")
+        if seed_path.exists():
+            seed_path.unlink()
+        seeds = [self.factory.random_init() for _ in range(3)]
+        for i, candidate in enumerate(seeds):
+            candidate.cand_id = f"0_{i}"
+        seeds[0].number = 99999  # Inject a great seed to make sure it gets saved
+        self.factory.save_population(seeds, seed_path)
+
+        self.evolution = Evolution(self.n_gens,
+                                   self.pop_size,
+                                   0.0,
+                                   2,
+                                   0.1,
+                                   0.1,
+                                   "tests/temp",
+                                   seed_path="tests/seeds",
+                                   prescriptor_factory=self.factory,
+                                   evaluator=evaluator)
+
+    def tearDown(self):
+        if Path("tests/temp").exists():
+            shutil.rmtree(Path("tests/temp"))
+        Path("tests/seeds").unlink(missing_ok=True)
 
     def test_results_csv(self):
         """
@@ -224,8 +249,8 @@ class TestSaving(unittest.TestCase):
         """
         Makes sure we're saving the population correctly. We save only the pareto front and check that we aren't
         saving duplicates (eg when 1_0 does well in gen 1 and gen 2, we only save it once).
+        Also checks to make sure the "perfect" seed got saved.
         """
-        pareto = set()
         for i in range(self.n_gens):
             if i == 0:
                 self.evolution.create_initial_population()
@@ -233,8 +258,7 @@ class TestSaving(unittest.TestCase):
                 self.evolution.step()
 
             results_df = pd.read_csv("tests/temp/results.csv")
-            results_df = results_df[results_df["gen"] == i+1]
-            pareto_df = results_df[results_df["rank"] == 1]
-            pareto.update(pareto_df["cand_id"].to_list())
+            pareto = results_df[results_df["rank"] == 1]["cand_id"].to_list()
             pop_dict = self.factory.load_population(Path("tests/temp/population"))
-            self.assertEqual(len(pop_dict), len(pareto))
+            self.assertEqual(set(pop_dict.keys()), set(pareto))
+            self.assertTrue("0_0" in pareto)
