@@ -34,3 +34,5 @@ evolution.run_evolution()
 
 ## Example
 For a more full-fledged example see `examples/cartpole` for a simple implementation of direct evolution (not ESP) on the CartPole gymnasium environment.
+
+See `examples/bnh` for a simple example of directly evolving the parameters of the BNH function.
