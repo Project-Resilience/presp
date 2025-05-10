@@ -173,19 +173,15 @@ class Evolution:
 
     def record_results(self):
         """
-        Record results from population.
-        TODO: Currently this overwrites the population every generation. Maybe we can do something faster like save
-        by generation then merge at the end. Currently the save_all flag is dangerous because it will save
-        every candidate every generation O(P*G^2) where P is the population size and G is the number of generations.
+        Record results from current population into a CSV file.
+        Also keeps track of the best candidates in self.save_cache so we can serialize them later.
         """
         rows = []
         for candidate in self.population:
             # Save to file if it's new. Only save rank 1 candidates if save_all is False.
             cand_gen = int(candidate.cand_id.split("_")[0])
-            if candidate.rank == 1 or self.save_all:
-                # If the candidate is new (edge case for seeds in generation 0 which must be manually accounted for)
-                if cand_gen == self.generation or (cand_gen == 0 and self.generation == 1):
-                    self.save_cache.append(candidate)
+            if (candidate.rank == 1 or self.save_all) and cand_gen == self.generation:
+                self.save_cache.append(candidate)
             # Record candidates' results
             row = {
                 "gen": self.generation,
@@ -201,8 +197,6 @@ class Evolution:
 
         results_df = pd.DataFrame(rows)
         results_df.to_csv(self.save_path / "results.csv", mode="a", index=False, header=False)
-
-        self.prescriptor_factory.save_population(self.save_cache, self.save_path / "population")
 
     def validate(self):
         """
@@ -251,7 +245,10 @@ class Evolution:
     def run_evolution(self):
         """
         Runs the evolutionary process for n_generations.
+        Then saves the Pareto front from each generation to file.
         """
         self.create_initial_population()
         for _ in tqdm(range(self.generation, self.n_generations+1), desc="Running Evolution"):
             self.step()
+        # Save all candidates at the end of evolution
+        self.prescriptor_factory.save_population(self.save_cache, self.save_path / "population")
